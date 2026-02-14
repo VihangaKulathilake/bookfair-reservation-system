@@ -24,6 +24,7 @@ const SignUpForm = ({
     togglePasswordVisibility,
     showConfirmPassword,
     toggleConfirmPasswordVisibility,
+    passwordHelperText,
 }) => {
     const theme = useTheme();
     const inputSx = {
@@ -116,7 +117,7 @@ const SignUpForm = ({
                 value={formData.password}
                 onChange={handleChange}
                 error={!!errors.password}
-                helperText={errors.password}
+                helperText={passwordHelperText ?? errors.password}
                 InputProps={{
                     startAdornment: (
                         <InputAdornment position="start">

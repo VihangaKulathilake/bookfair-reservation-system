@@ -7,7 +7,7 @@ import AuthLayout from '../../components/layout/AuthLayout';
 import SignInForm from '../../components/auth/SignInForm';
 
 // Utils & API
-import { validateEmail, validatePassword } from '../../utils/validation';
+import { validateEmail, validatePassword, passwordRulesText } from '../../utils/validation';
 import { loginUser } from '../../api/authApi';
 
 // Assets
@@ -15,6 +15,7 @@ const loginImage = '/assets/login_pic.jpg'; // Ensure this matches public asset 
 
 const Login = () => {
     const navigate = useNavigate();
+    const PASSWORD_MIN_LENGTH = 8;
     
     // State
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -42,7 +43,7 @@ const Login = () => {
     const validateForm = () => {
         let tempErrors = {};
         const emailError = validateEmail(formData.email);
-        const passwordError = validatePassword(formData.password);
+        const passwordError = validatePassword(formData.password, PASSWORD_MIN_LENGTH);
 
         if (emailError) tempErrors.email = emailError;
         if (passwordError) tempErrors.password = passwordError;
@@ -98,6 +99,7 @@ const Login = () => {
                 togglePasswordVisibility={togglePasswordVisibility}
                 rememberMe={rememberMe}
                 setRememberMe={setRememberMe}
+                passwordHelperText={errors.password || passwordRulesText(PASSWORD_MIN_LENGTH)}
             />
             
             <Snackbar 

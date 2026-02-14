@@ -7,7 +7,7 @@ import AuthLayout from '../../components/layout/AuthLayout';
 import SignUpForm from '../../components/auth/SignUpForm';
 
 // Utils & API
-import { validateEmail, validatePassword, validateRequired, validatePasswordMatch } from '../../utils/validation';
+import { validateEmail, validatePassword, validatePasswordMatch, validateName, passwordRulesText } from '../../utils/validation';
 import { registerUser } from '../../api/authApi';
 
 // Assets
@@ -15,6 +15,7 @@ const registerImage = '/assets/login_pic.jpg'; // Using same image for now
 
 const Register = () => {
     const navigate = useNavigate();
+    const PASSWORD_MIN_LENGTH = 8;
 
     // State
     const [formData, setFormData] = useState({ 
@@ -44,9 +45,9 @@ const Register = () => {
     const validateForm = () => {
         let tempErrors = {};
         
-        const nameError = validateRequired(formData.name, 'Name');
+        const nameError = validateName(formData.name);
         const emailError = validateEmail(formData.email);
-        const passwordError = validatePassword(formData.password, 8);
+        const passwordError = validatePassword(formData.password, PASSWORD_MIN_LENGTH);
         const confirmPasswordError = validatePasswordMatch(formData.password, formData.confirmPassword);
 
         if (nameError) tempErrors.name = nameError;
@@ -108,6 +109,7 @@ const Register = () => {
                 togglePasswordVisibility={togglePasswordVisibility}
                 showConfirmPassword={showConfirmPassword}
                 toggleConfirmPasswordVisibility={toggleConfirmPasswordVisibility}
+                passwordHelperText={errors.password || passwordRulesText(PASSWORD_MIN_LENGTH)}
             />
 
             <Snackbar 
