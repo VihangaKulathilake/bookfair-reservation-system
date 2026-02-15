@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Button, Chip, Container, Grid, Paper, Stack, Typography, alpha, useTheme } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import NavBar from '../components/layout/NavBar';
+import SiteFooter from '../components/layout/SiteFooter';
 
 const LandingPage = () => {
     const theme = useTheme();
@@ -46,6 +48,8 @@ const LandingPage = () => {
 
     return (
         <Box sx={{ minHeight: '100dvh', backgroundColor: theme.palette.background.default }}>
+            <NavBar role="guest" />
+
             <Box
                 sx={{
                     position: 'relative',
@@ -206,6 +210,8 @@ const LandingPage = () => {
                     ))}
                 </Grid>
             </Container>
+
+            <SiteFooter />
         </Box>
     );
 };
