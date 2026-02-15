@@ -1,23 +1,35 @@
 package com.bookfair.backend.model;
 
+import com.bookfair.backend.enums.StallSize;
+import com.bookfair.backend.enums.StallStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.math.BigDecimal;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "stalls")
 public class Stall {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long stallId;
 
-    private String name;
+    @Column(unique = true, nullable = false)
+    private String stallCode;
 
-    private String type;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StallSize stallSize;
 
-    private Double price;
+    @Column(nullable = false)
+    private BigDecimal price;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StallStatus stallStatus;
 }

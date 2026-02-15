@@ -1,16 +1,14 @@
 package com.bookfair.backend.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import org.springframework.stereotype.Repository;
-
 @Getter
-@Repository
+@Builder
+@AllArgsConstructor
 public class AuthResponse {
 
-    private String string;
-
-    public AuthResponse (String string) {
-        this.string = string;
-    }
+    private String businessName;
+    private String token;
 
 }
