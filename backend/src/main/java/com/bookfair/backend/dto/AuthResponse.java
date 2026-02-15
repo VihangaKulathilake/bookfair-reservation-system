@@ -1,10 +1,10 @@
 package com.bookfair.backend.dto;
 
+import lombok.Data;
 import lombok.Getter;
 import org.springframework.stereotype.Repository;
 
-@Getter
-@Repository
+@Data
 public class AuthResponse {
 
     private String string;

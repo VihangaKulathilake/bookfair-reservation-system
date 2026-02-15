@@ -1,15 +1,12 @@
 package com.bookfair.backend.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+@Data
+@AllArgsConstructor
 public class LoginRequest {
-    @Setter
-    @Getter
-    private String email;
 
-    @Setter
-    @Getter
+    private String email;
     private String password;
 
 }
