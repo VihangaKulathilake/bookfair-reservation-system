@@ -1,4 +1,4 @@
-package com.bookfair.backend.model;
+package com.bookfair.backend.enums;
 
 public enum Role {
     BUSINESS,

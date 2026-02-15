@@ -1,20 +1,21 @@
 package com.bookfair.backend.model;
 
+import com.bookfair.backend.enums.ReservationStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Reservation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long reservationId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -27,5 +28,13 @@ public class Reservation {
     private LocalDateTime reservationDate;
 
     // Status: PENDING, CONFIRMED, CANCELLED
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private ReservationStatus status;
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = ReservationStatus.PENDING;
+        }
+    }
 }
