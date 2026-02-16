@@ -1,8 +1,14 @@
 package com.bookfair.backend.repository;
 
+import com.bookfair.backend.enums.StallSize;
+import com.bookfair.backend.enums.StallStatus;
 import com.bookfair.backend.model.Stall;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface StallRepository extends JpaRepository<Stall, Long> {
+import java.util.List;
 
+public interface StallRepository extends JpaRepository<Stall, Long> {
+    boolean existsByStallCode(String stallCode);
+    List<Stall> findByStallStatus(StallStatus stallStatus);
+    List<Stall> findByStallSize(StallSize stallSize);
 }
