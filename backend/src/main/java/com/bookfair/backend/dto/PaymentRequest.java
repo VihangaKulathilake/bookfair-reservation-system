@@ -1,15 +1,16 @@
 package com.bookfair.backend.dto;
 
+import com.bookfair.backend.enums.PaymentMethod;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Setter
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginRequest {
-    private String email;
-    private String password;
+public class PaymentRequest {
+    private Long reservationId;
+    private PaymentMethod paymentMethod;
 }
