@@ -5,36 +5,38 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "reservations")
 public class Reservation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long reservationId;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "stall_id")
-    private Stall stall;
+    @OneToMany(mappedBy = "reservation")
+    private List<Stall> stalls;
+
+    private Double totalAmount;
 
     private LocalDateTime reservationDate;
 
-    // Status: PENDING, CONFIRMED, CANCELLED
     @Enumerated(EnumType.STRING)
-    private ReservationStatus status;
+    private ReservationStatus reservationStatus;
 
     @PrePersist
     public void prePersist() {
-        if (status == null) {
-            status = ReservationStatus.PENDING;
+        if (reservationStatus == null) {
+            reservationStatus = ReservationStatus.PENDING;
         }
     }
 }
