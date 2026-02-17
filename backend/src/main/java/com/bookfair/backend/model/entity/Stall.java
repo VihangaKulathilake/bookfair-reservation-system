@@ -28,7 +28,7 @@ public class Stall {
 
 <<<<<<< Updated upstream:backend/src/main/java/com/bookfair/backend/model/Stall.java
     private Double price;
-=======
+
     @Column(nullable = false)
     private double price;
 
