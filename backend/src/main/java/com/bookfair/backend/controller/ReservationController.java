@@ -40,4 +40,19 @@ public class ReservationController {
     public List<ReservationResponse> getReservationByUserId(@PathVariable Long userId) {
         return reservationService.getReservationByUserId(userId);
     }
+
+    @PutMapping("/{id}/status")
+    public ReservationResponse updateReservationStatus(@PathVariable Long id, @RequestParam String status) {
+        return reservationService.updateReservationStatus(id, status);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteReservation(@PathVariable Long id) {
+        reservationService.deleteReservation(id);
+    }
+
+    @GetMapping(value = "/{id}/qr", produces = org.springframework.http.MediaType.IMAGE_PNG_VALUE)
+    public byte[] generateQrCode(@PathVariable Long id) {
+        return reservationService.generateQrCode(id);
+    }
 }
