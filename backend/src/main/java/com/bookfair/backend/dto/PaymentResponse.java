@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class PaymentResponse {
     private Long paymentId;
     private Double amount;
+    private String transactionId;
     private PaymentMethod paymentMethod;
     private PaymentStatus paymentStatus;
     private LocalDateTime paymentDate;

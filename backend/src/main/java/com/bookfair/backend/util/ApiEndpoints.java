@@ -37,6 +37,7 @@ public final class ApiEndpoints {
     // ===================== PAYMENTS =====================
     public static final String PAYMENT_BASE = "/api/payments";
     public static final String PROCESS_PAYMENT = "/process";
+    public static final String CONFIRM_PAYMENT = "/confirm";
     public static final String CONFIRM_CASH_PAYMENT = "/{paymentId}/confirm";
     public static final String GET_PAYMENT_BY_ID = "/{paymentId}";
     public static final String GET_ALL_PAYMENTS = "/all";

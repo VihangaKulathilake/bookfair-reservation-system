@@ -22,6 +22,8 @@ public class Payment {
 
     private Double amount;
 
+    private String transactionId;
+
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
