@@ -2,7 +2,7 @@ package com.bookfair.backend.controller;
 
 import com.bookfair.backend.dto.PaymentRequest;
 import com.bookfair.backend.dto.PaymentResponse;
-import com.bookfair.backend.service.PaymentService;
+import com.bookfair.backend.service.payment.PaymentService;
 import com.bookfair.backend.util.ApiEndpoints;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,8 +17,17 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping(ApiEndpoints.PROCESS_PAYMENT)
-    public PaymentResponse processPayment(@RequestBody PaymentRequest paymentRequest) {
+    public Object processPayment(@RequestBody PaymentRequest paymentRequest) {
         return paymentService.processPayment(paymentRequest);
+    }
+
+    @PostMapping(ApiEndpoints.CONFIRM_PAYMENT)
+    public PaymentResponse confirmPayment(@RequestBody PaymentRequest paymentRequest) {
+        return paymentService.confirmPayment(
+                paymentRequest.getReferenceId(),
+                paymentRequest.getPaymentMethod(),
+                paymentRequest.getReservationId()
+        );
     }
 
     @PutMapping(ApiEndpoints.CONFIRM_CASH_PAYMENT)
