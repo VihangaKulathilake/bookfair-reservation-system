@@ -1,9 +1,6 @@
 package com.bookfair.backend.model.entity;
 
-<<<<<<< Updated upstream:backend/src/main/java/com/bookfair/backend/model/Reservation.java
-=======
 import com.bookfair.backend.model.enums.ReservationStatus;
->>>>>>> Stashed changes:backend/src/main/java/com/bookfair/backend/model/entity/Reservation.java
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,17 +21,7 @@ public class Reservation {
     @JoinColumn(name = "user_id")
     private User user;
 
-<<<<<<< Updated upstream:backend/src/main/java/com/bookfair/backend/model/Reservation.java
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "stall_id")
-    private Stall stall;
-
-    private LocalDateTime reservationDate;
-
-    // Status: PENDING, CONFIRMED, CANCELLED
-    private String status;
-=======
-    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stall_id")
     private Stall stall;
 
@@ -42,7 +29,7 @@ public class Reservation {
 
     private LocalDateTime reservationDate;
 
-    @Column(name = "status")
+    // Status: PENDING, CONFIRMED, CANCELLED
     private String status;
 
     @PrePersist
@@ -51,5 +38,4 @@ public class Reservation {
             status = ReservationStatus.PENDING.name();
         }
     }
->>>>>>> Stashed changes:backend/src/main/java/com/bookfair/backend/model/entity/Reservation.java
 }

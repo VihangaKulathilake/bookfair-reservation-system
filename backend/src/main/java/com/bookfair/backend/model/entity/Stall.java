@@ -1,33 +1,27 @@
 package com.bookfair.backend.model.entity;
 
-<<<<<<< Updated upstream:backend/src/main/java/com/bookfair/backend/model/Stall.java
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-=======
 import com.bookfair.backend.model.enums.StallSize;
 import com.bookfair.backend.model.enums.StallStatus;
 import jakarta.persistence.*;
 import lombok.*;
->>>>>>> Stashed changes:backend/src/main/java/com/bookfair/backend/model/entity/Stall.java
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "stalls")
 public class Stall {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    @Column(unique = true, nullable = false)
+    private String stallCode;
 
-    private String type;
-
-<<<<<<< Updated upstream:backend/src/main/java/com/bookfair/backend/model/Stall.java
-    private Double price;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StallSize stallSize;
 
     @Column(nullable = false)
     private double price;
@@ -38,9 +32,4 @@ public class Stall {
 
     @Column(nullable = false)
     private String name;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reservation_id")
-    private Reservation reservation;
->>>>>>> Stashed changes:backend/src/main/java/com/bookfair/backend/model/entity/Stall.java
 }

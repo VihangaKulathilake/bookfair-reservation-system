@@ -1,9 +1,6 @@
 package com.bookfair.backend.model.entity;
 
-<<<<<<< Updated upstream:backend/src/main/java/com/bookfair/backend/model/User.java
-=======
 import com.bookfair.backend.model.enums.Role;
->>>>>>> Stashed changes:backend/src/main/java/com/bookfair/backend/model/entity/User.java
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
