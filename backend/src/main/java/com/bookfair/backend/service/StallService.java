@@ -10,7 +10,14 @@ public interface StallService {
     StallResponse createStall(StallRequest stallRequest);
 
     StallResponse getStallById(Long id);
+
     List<StallResponse> getAllStalls();
+
     List<StallResponse> getAvailableStalls();
+
     List<StallResponse> getStallsBySize(StallSize stallSize);
+
+    StallResponse updateStall(Long id, StallRequest stallRequest);
+
+    void deleteStall(Long id);
 }
