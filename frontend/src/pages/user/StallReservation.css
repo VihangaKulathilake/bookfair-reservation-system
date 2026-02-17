@@ -1,0 +1,388 @@
+.stall-reservation-shell {
+	position: relative;
+	min-height: 100vh;
+	isolation: isolate;
+	overflow: hidden;
+	background: linear-gradient(180deg, #f4f6f8 0%, #edf2f8 100%);
+	perspective: 1400px;
+}
+
+.stall-reservation-shell::before,
+.stall-reservation-shell::after {
+	content: '';
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	transform: translateZ(0);
+}
+
+.stall-reservation-shell::before {
+	z-index: -2;
+	background-image: url('/assets/map.png');
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	filter: blur(12px) saturate(1.02) brightness(0.8);
+	scale: 1.08;
+	animation: bgFloat 18s ease-in-out infinite alternate;
+}
+
+.stall-reservation-shell::after {
+	z-index: -1;
+	background:
+		linear-gradient(135deg, rgba(13, 71, 161, 0.26) 0%, rgba(245, 124, 0, 0.18) 100%),
+		radial-gradient(circle at 18% 14%, rgba(13, 71, 161, 0.18) 0%, transparent 42%),
+		radial-gradient(circle at 84% 78%, rgba(245, 124, 0, 0.14) 0%, transparent 46%);
+	background-size: 160% 160%, 150% 150%, 140% 140%;
+	animation: auraShift 16s ease-in-out infinite alternate;
+}
+
+.stall-navbar {
+	position: relative;
+	z-index: 30;
+}
+
+.stall-navbar .MuiAppBar-root {
+	background: rgba(244, 246, 248, 0.84);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.stall-reservation-page {
+	position: relative;
+	max-width: 1240px;
+	margin: 0 auto;
+	padding: 20px 20px 28px;
+	z-index: 10;
+}
+
+.stall-reservation-page h2 {
+	margin: 0;
+	font-size: clamp(1.35rem, 1.1rem + 0.9vw, 1.9rem);
+	letter-spacing: 0.01em;
+	color: #ffffff;
+	text-shadow: 0 2px 14px rgba(8, 13, 28, 0.45);
+}
+
+.subtitle {
+	margin: 10px 0 18px;
+	color: rgba(248, 250, 255, 0.96);
+	font-weight: 500;
+	text-shadow: 0 2px 10px rgba(8, 13, 28, 0.32);
+}
+
+.overview-map-wrapper {
+	position: relative;
+	border-radius: 18px;
+	overflow: hidden;
+	border: 1px solid rgba(255, 255, 255, 0.28);
+	box-shadow:
+		0 24px 42px rgba(12, 20, 42, 0.3),
+		0 10px 18px rgba(12, 20, 42, 0.22);
+	transform-style: preserve-3d;
+	transform: rotateX(10deg) rotateY(-4deg) translateZ(0);
+	transition: transform 0.4s ease, box-shadow 0.4s ease;
+	animation: mapDrift 9s ease-in-out infinite;
+}
+
+.overview-map-wrapper::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	background: linear-gradient(145deg, rgba(255, 255, 255, 0.12) 0%, transparent 28%, rgba(13, 21, 45, 0.2) 100%);
+	pointer-events: none;
+}
+
+.overview-map-wrapper::after {
+	content: '';
+	position: absolute;
+	inset: auto 6% -24px 6%;
+	height: 26px;
+	border-radius: 50%;
+	background: rgba(8, 14, 30, 0.45);
+	filter: blur(14px);
+	z-index: 0;
+	pointer-events: none;
+}
+
+.overview-map-wrapper:hover {
+	transform: rotateX(7deg) rotateY(-2deg) translateY(-4px);
+	box-shadow:
+		0 30px 50px rgba(12, 20, 42, 0.34),
+		0 12px 22px rgba(12, 20, 42, 0.24);
+}
+
+.overview-map-image {
+	width: 100%;
+	display: block;
+	height: auto;
+	transform: scale(1.02) translateZ(12px);
+	transform-origin: center;
+	pointer-events: none;
+}
+
+.map-point {
+	position: absolute;
+	transform: translate(-50%, -50%) translateZ(28px);
+	border: 1px solid rgba(255, 255, 255, 0.58);
+	border-radius: 999px;
+	padding: 7px 12px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #fff;
+	cursor: pointer;
+	z-index: 8;
+	backdrop-filter: blur(5px);
+	-webkit-backdrop-filter: blur(5px);
+	box-shadow: 0 8px 18px rgba(16, 31, 65, 0.3);
+	transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+	animation: markerPulse 3.8s ease-in-out infinite;
+}
+
+.map-point.hall {
+	background: linear-gradient(135deg, rgba(82, 108, 255, 0.9) 0%, rgba(48, 86, 227, 0.9) 100%);
+}
+
+.map-point.hall:hover {
+	transform: translate(-50%, -52%) translateZ(32px);
+	box-shadow: 0 12px 22px rgba(16, 31, 65, 0.36);
+}
+
+.map-point.other {
+	background: linear-gradient(135deg, rgba(109, 120, 142, 0.84) 0%, rgba(83, 92, 112, 0.84) 100%);
+	cursor: default;
+	animation: none;
+}
+
+.popup-backdrop {
+	position: fixed;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(120deg, rgba(22, 31, 58, 0.62) 0%, rgba(38, 20, 65, 0.58) 100%);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	z-index: 1300;
+	padding: 16px;
+}
+
+.popup-card {
+	width: min(760px, 100%);
+	background: linear-gradient(145deg, rgba(255, 255, 255, 0.86) 0%, rgba(246, 249, 255, 0.72) 100%);
+	border-radius: 14px;
+	padding: 18px;
+	border: 1px solid rgba(226, 232, 248, 0.9);
+	box-shadow: 0 16px 34px rgba(11, 23, 48, 0.22);
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+}
+
+.popup-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.popup-header h3 {
+	margin: 0;
+	color: #1f2947;
+}
+
+.close-btn {
+	border: 1px solid rgba(133, 147, 184, 0.44);
+	background: rgba(255, 255, 255, 0.74);
+	border-radius: 10px;
+	width: 32px;
+	height: 32px;
+	cursor: pointer;
+	transition: transform 0.16s ease, background 0.16s ease;
+}
+
+.close-btn:hover {
+	transform: translateY(-1px);
+	background: rgba(255, 255, 255, 0.95);
+}
+
+.popup-help {
+	margin: 8px 0 12px;
+	color: #4f5d7c;
+	font-size: 0.9rem;
+}
+
+.stall-grid {
+	margin-top: 10px;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+	gap: 10px;
+}
+
+.stall-card {
+	border-radius: 14px;
+	padding: 10px;
+	border: 1px solid rgba(147, 161, 195, 0.3);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	cursor: pointer;
+	text-transform: capitalize;
+	background: rgba(255, 255, 255, 0.78);
+	transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.stall-card strong {
+	font-size: 0.95rem;
+}
+
+.stall-card small {
+	color: #586683;
+}
+
+.stall-card.available {
+	background: linear-gradient(160deg, rgba(236, 250, 241, 0.95) 0%, rgba(221, 245, 232, 0.9) 100%);
+	border-color: rgba(110, 196, 138, 0.45);
+}
+
+.stall-card.reserved {
+	background: linear-gradient(160deg, rgba(237, 241, 247, 0.95) 0%, rgba(225, 230, 238, 0.92) 100%);
+	border-color: rgba(151, 161, 179, 0.5);
+	cursor: not-allowed;
+	opacity: 0.8;
+}
+
+.stall-card.selected {
+	background: linear-gradient(165deg, rgba(255, 238, 220, 0.96) 0%, rgba(255, 224, 192, 0.94) 100%);
+	border-color: rgba(247, 163, 84, 0.62);
+	box-shadow: 0 10px 20px rgba(204, 134, 73, 0.26);
+}
+
+.stall-card:not(.reserved):hover {
+	transform: translateY(-2px);
+	box-shadow: 0 12px 22px rgba(22, 38, 72, 0.2);
+}
+
+.stall-small {
+	border-left: 5px solid #2ecc71;
+}
+
+.stall-medium {
+	border-left: 5px solid #f39c12;
+}
+
+.stall-large {
+	border-left: 5px solid #8e44ad;
+}
+
+.popup-footer {
+	margin-top: 14px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	color: #32405f;
+	font-weight: 600;
+}
+
+.book-btn {
+	border: none;
+	border-radius: 12px;
+	padding: 10px 14px;
+	background: linear-gradient(135deg, #3f63ff 0%, #2848d8 100%);
+	color: #fff;
+	font-weight: 700;
+	cursor: pointer;
+	box-shadow: 0 12px 26px rgba(49, 83, 217, 0.36);
+	transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.book-btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 16px 30px rgba(49, 83, 217, 0.46);
+}
+
+.book-btn:disabled {
+	cursor: not-allowed;
+	opacity: 0.62;
+	transform: none;
+	box-shadow: none;
+	background: linear-gradient(135deg, #8a94c2 0%, #7480b2 100%);
+}
+
+@media (max-width: 680px) {
+	.stall-reservation-page {
+		padding: 16px 12px 22px;
+	}
+
+	.overview-map-wrapper {
+		border-radius: 12px;
+		transform: none;
+		animation: none;
+	}
+
+	.overview-map-wrapper::after {
+		display: none;
+	}
+
+	.map-point {
+		font-size: 0.72rem;
+		padding: 6px 9px;
+		animation: none;
+	}
+
+	.popup-card {
+		padding: 14px;
+		border-radius: 16px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.stall-reservation-shell::before,
+	.stall-reservation-shell::after,
+	.overview-map-wrapper,
+	.map-point {
+		animation: none;
+	}
+}
+
+@keyframes bgFloat {
+	0% {
+		transform: scale(1.08) translate3d(0, 0, 0);
+	}
+	100% {
+		transform: scale(1.14) translate3d(-1.2%, -1.5%, 0);
+	}
+}
+
+@keyframes auraShift {
+	0% {
+		background-position: 0% 30%, 10% 10%, 90% 80%;
+	}
+	100% {
+		background-position: 100% 70%, 30% 20%, 70% 60%;
+	}
+}
+
+@keyframes mapDrift {
+	0%,
+	100% {
+		transform: rotateX(10deg) rotateY(-4deg) translateY(0);
+	}
+	50% {
+		transform: rotateX(9deg) rotateY(-2deg) translateY(-3px);
+	}
+}
+
+@keyframes markerPulse {
+	0%,
+	100% {
+		box-shadow: 0 8px 18px rgba(16, 31, 65, 0.3);
+	}
+	50% {
+		box-shadow: 0 12px 24px rgba(16, 31, 65, 0.42);
+	}
+}
