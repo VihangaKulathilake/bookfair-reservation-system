@@ -13,4 +13,5 @@ import lombok.Setter;
 public class PaymentRequest {
     private Long reservationId;
     private PaymentMethod paymentMethod;
+    private String referenceId;
 }

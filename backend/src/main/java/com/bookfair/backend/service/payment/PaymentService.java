@@ -1,14 +1,16 @@
-package com.bookfair.backend.service;
+package com.bookfair.backend.service.payment;
 
 import com.bookfair.backend.dto.PaymentRequest;
 import com.bookfair.backend.dto.PaymentResponse;
+import com.bookfair.backend.enums.PaymentMethod;
 
 import java.util.List;
 
 public interface PaymentService {
-    PaymentResponse processPayment(PaymentRequest paymentRequest);
+    Object processPayment(PaymentRequest paymentRequest);
     List<PaymentResponse> getPaymentsByUserId(Long id);
     PaymentResponse confirmCashPayment(Long id);
+    PaymentResponse confirmPayment(String referenceId, PaymentMethod paymentMethod, Long reservationId);
     PaymentResponse getPaymentById(Long id);
     List<PaymentResponse> getAllPayments();
 }

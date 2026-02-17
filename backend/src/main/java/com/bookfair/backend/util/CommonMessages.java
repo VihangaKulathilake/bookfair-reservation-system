@@ -20,5 +20,6 @@ public class CommonMessages {
     // Payment
     public static final String PAYMENT_NOT_FOUND = "Payments not found";
     public static final String PAYMENT_CONFIRMATION_REQUIRED = "Only cash payments require confirmation";
+    public static final String PAYMENT_PROVIDER_NOT_FOUND = "Payment provider not found";
 
 }
