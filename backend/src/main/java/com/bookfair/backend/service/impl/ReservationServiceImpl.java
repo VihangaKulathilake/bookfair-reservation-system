@@ -4,6 +4,8 @@ import com.bookfair.backend.dto.ReservationRequest;
 import com.bookfair.backend.dto.ReservationResponse;
 import com.bookfair.backend.enums.ReservationStatus;
 import com.bookfair.backend.enums.StallStatus;
+import com.bookfair.backend.exception.ResourceNotFoundException;
+import com.bookfair.backend.exception.ValidationException;
 import com.bookfair.backend.model.Reservation;
 import com.bookfair.backend.model.Stall;
 import com.bookfair.backend.model.User;
@@ -36,7 +38,7 @@ public class ReservationServiceImpl implements ReservationService {
     public ReservationResponse createReservation(ReservationRequest reservationRequest) {
 
         User user = userRepository.findById(reservationRequest.getUserId())
-                .orElseThrow(() -> new RuntimeException(CommonMessages.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.USER_NOT_FOUND));
 
         List<Reservation> userReservations = reservationRepository.findByUserId(user.getId());
         long activeStallsCount = userReservations.stream()
@@ -45,22 +47,22 @@ public class ReservationServiceImpl implements ReservationService {
                 .sum();
 
         if (activeStallsCount + reservationRequest.getStallIds().size() > 3) {
-            throw new RuntimeException(CommonMessages.MAX_STALLS_EXCEEDED);
+            throw new ValidationException(CommonMessages.MAX_STALLS_EXCEEDED);
         }
 
         List<Stall> stalls = stallRepository.findAllById(reservationRequest.getStallIds());
 
         if (stalls.size() != reservationRequest.getStallIds().size()) {
-            throw new RuntimeException(CommonMessages.STALL_NOT_FOUND);
+            throw new ResourceNotFoundException(CommonMessages.STALL_NOT_FOUND);
         }
 
         if (stalls.size() > 3) {
-            throw new RuntimeException(CommonMessages.MAX_STALLS_EXCEEDED);
+            throw new ValidationException(CommonMessages.MAX_STALLS_EXCEEDED);
         }
 
         for (Stall stall : stalls) {
             if (stall.getStallStatus() != StallStatus.AVAILABLE) {
-                throw new RuntimeException(CommonMessages.STALL_NOT_AVAILABLE);
+                throw new ValidationException(CommonMessages.STALL_NOT_AVAILABLE);
             }
         }
 
@@ -80,6 +82,7 @@ public class ReservationServiceImpl implements ReservationService {
         }
 
         savedReservation.setTotalAmount(totalAmount);
+        savedReservation.setStalls(stalls); // Explicitly set stalls for response mapping
         stallRepository.saveAll(stalls);
         reservationRepository.save(savedReservation);
 
@@ -105,7 +108,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public ReservationResponse getReservationById(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException(CommonMessages.RESERVATION_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.RESERVATION_NOT_FOUND));
         return mapToResponse(reservation);
     }
 
@@ -113,7 +116,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional
     public ReservationResponse cancelReservation(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException(CommonMessages.RESERVATION_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.RESERVATION_NOT_FOUND));
 
         reservation.setReservationStatus(ReservationStatus.CANCELLED);
 
@@ -128,7 +131,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public ReservationResponse updateReservationStatus(Long id, String status) {
         Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(CommonMessages.RESERVATION_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.RESERVATION_NOT_FOUND));
 
         try {
             ReservationStatus newStatus = ReservationStatus.valueOf(status.toUpperCase());
@@ -139,7 +142,7 @@ public class ReservationServiceImpl implements ReservationService {
             }
 
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid status");
+            throw new ValidationException("Invalid status");
         }
 
         return mapToResponse(reservationRepository.save(reservation));
@@ -148,7 +151,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public void deleteReservation(Long id) {
         Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(CommonMessages.RESERVATION_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.RESERVATION_NOT_FOUND));
 
         for (Stall stall : reservation.getStalls()) {
             stall.setReservation(null);
@@ -162,10 +165,10 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public byte[] generateQrCode(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException(CommonMessages.RESERVATION_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.RESERVATION_NOT_FOUND));
 
         if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
-            throw new RuntimeException(CommonMessages.QR_CODE_ONLY_FOR_CONFIRMED);
+            throw new ValidationException(CommonMessages.QR_CODE_ONLY_FOR_CONFIRMED);
         }
 
         String content = "Reservation ID: " + reservation.getId() +
@@ -178,15 +181,16 @@ public class ReservationServiceImpl implements ReservationService {
 
     private ReservationResponse mapToResponse(Reservation reservation) {
 
-        List<String> stallCodes = reservation.getStalls()
+        List<String> stallCodes = (reservation.getStalls() != null) ? reservation.getStalls()
                 .stream()
                 .map(Stall::getStallCode)
-                .toList();
+                .toList() : java.util.Collections.emptyList();
 
         return ReservationResponse.builder()
                 .reservationId(reservation.getId())
                 .userId(reservation.getUser().getId())
                 .stallCodes(stallCodes)
+                .totalAmount(reservation.getTotalAmount())
                 .reservationDate(reservation.getReservationDate())
                 .reservationStatus(reservation.getReservationStatus())
                 .build();
