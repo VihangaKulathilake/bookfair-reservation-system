@@ -27,7 +27,7 @@ const EmptyState = ({ title, description, actionLabel, onAction }) => {
             >
                 <Box
                     component="img"
-                    src="https://illustrations.popsy.co/amber/surr-no-data.svg" // Placeholder illustration
+                    src="https://illustrations.popsy.co/amber/surr-no-data.svg" 
                     alt="No data"
                     sx={{ width: 200, height: 200, mb: 4, opacity: 0.8 }}
                 />
