@@ -4,6 +4,7 @@ import './StallReservation.css';
 
 const MAX_SELECTION = 3;
 const MAP_IMAGE_SRC = '/assets/map.png';
+const BOOKING_HISTORY_STORAGE_KEY = 'bookfair_booking_history_v1';
 const hallPolygonById = {
 	hall_m: '225,60 275,60 275,85 225,85',
 	hall_l: '225,95 275,95 275,120 225,120',
@@ -28,6 +29,21 @@ const stallSizeDimensions = {
 
 const MIN_AISLE_WIDTH_PX = 16;
 
+const compactHallGenerationConfig = {
+	densityDivisor: 72,
+	minCount: 18,
+	maxCount: 44,
+	stepX: 6,
+	stepY: 6,
+	sizeCycle: ['small', 'small', 'medium', 'small', 'medium', 'large', 'small'],
+	overlapPadding: 0,
+	secondaryFill: false,
+	entranceExitAislePx: 18,
+	mainAislePx: 18,
+	sideAislePx: 12,
+	crossAislePx: 12,
+};
+
 const hallGenerationConfig = {
 	default: {
 		densityDivisor: 130,
@@ -43,34 +59,8 @@ const hallGenerationConfig = {
 		sideAislePx: 10,
 		crossAislePx: 10,
 	},
-	hall_c: {
-		densityDivisor: 72,
-		minCount: 18,
-		maxCount: 44,
-		stepX: 6,
-		stepY: 6,
-		sizeCycle: ['small', 'small', 'medium', 'small', 'medium', 'large', 'small'],
-		overlapPadding: 0,
-		secondaryFill: false,
-		entranceExitAislePx: 18,
-		mainAislePx: 18,
-		sideAislePx: 12,
-		crossAislePx: 12,
-	},
-	hall_d: {
-		densityDivisor: 72,
-		minCount: 18,
-		maxCount: 44,
-		stepX: 6,
-		stepY: 6,
-		sizeCycle: ['small', 'small', 'medium', 'small', 'medium', 'large', 'small'],
-		overlapPadding: 0,
-		secondaryFill: false,
-		entranceExitAislePx: 18,
-		mainAislePx: 18,
-		sideAislePx: 12,
-		crossAislePx: 12,
-	},
+	hall_c: compactHallGenerationConfig,
+	hall_d: compactHallGenerationConfig,
 };
 
 const parsePoints = (pointsString) =>
@@ -115,10 +105,6 @@ const getPolygonBounds = (pointsString) => {
 	const minY = Math.min(...points.map((point) => point.y));
 	const maxY = Math.max(...points.map((point) => point.y));
 	return { minX, maxX, minY, maxY };
-};
-
-const pointInPolygon = (x, y, polygon) => {
-	return pointInPolygonInclusive(x, y, polygon);
 };
 
 const polygonArea = (polygon) => {
@@ -402,6 +388,23 @@ const StallSelection = () => {
 		}));
 		setBookedByBusiness((previous) => [...previous, ...bookedStallKeys]);
 
+		const bookingRecord = {
+			bookingId: `BF-${Date.now().toString().slice(-6)}`,
+			hallId: activeHallId,
+			hallName: activeLocation?.name || activeHallId,
+			stalls: [...selectedInPopup],
+			confirmedAt: new Date().toISOString(),
+		};
+
+		try {
+			const existingHistoryRaw = localStorage.getItem(BOOKING_HISTORY_STORAGE_KEY);
+			const existingHistory = existingHistoryRaw ? JSON.parse(existingHistoryRaw) : [];
+			const nextHistory = [bookingRecord, ...(Array.isArray(existingHistory) ? existingHistory : [])];
+			localStorage.setItem(BOOKING_HISTORY_STORAGE_KEY, JSON.stringify(nextHistory));
+		} catch (error) {
+			console.error('Failed to persist booking history', error);
+		}
+
 		window.alert(`Booked stalls in ${activeLocation?.name}: ${selectedInPopup.join(', ')}`);
 		closePopup();
 	};
@@ -409,7 +412,7 @@ const StallSelection = () => {
 	return (
 		<div className="stall-reservation-shell">
 			<div className="stall-navbar">
-				<NavBar role="user" />
+				<NavBar role="user" showBookingConfirmation />
 			</div>
 			<div className="stall-reservation-page">
 				<h2>BMICH Hall Map</h2>

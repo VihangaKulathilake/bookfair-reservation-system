@@ -4,6 +4,7 @@ import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import ForgotPassword from '../pages/auth/ForgotPassword';
 import StallSelection from '../pages/user/StallSelection';
+import BookingConfirmation from '../pages/user/BookingConfirmation';
 
 const AppRoutes = () => {
     return (
@@ -16,6 +17,7 @@ const AppRoutes = () => {
             <Route path="/stall-selection" element={<StallSelection />} />
             <Route path="/stall-reservation" element={<StallSelection />} />
             <Route path="/stallselection" element={<StallSelection />} />
+            <Route path="/booking-confirmation" element={<BookingConfirmation />} />
         </Routes>
     );
 };
