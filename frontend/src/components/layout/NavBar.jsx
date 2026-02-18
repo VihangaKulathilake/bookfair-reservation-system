@@ -16,7 +16,7 @@ import {
 import { Menu as MenuIcon, Close as CloseIcon } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 
-const NavBar = ({ role, onLogout, userName }) => {
+const NavBar = ({ role, onLogout, userName, showBookingConfirmation }) => {
     const theme = useTheme();
     const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -32,12 +32,17 @@ const NavBar = ({ role, onLogout, userName }) => {
             };
         }
         if (role === 'user') {
+            const userLinks = [
+                { label: 'Dashboard', to: '/dashboard' },
+                { label: 'My Reservations', to: '/reservations' },
+                { label: 'Profile', to: '/profile' },
+            ];
+
             return {
-                links: [
-                    { label: 'Dashboard', to: '/dashboard' },
-                    { label: 'My Reservations', to: '/reservations' },
-                    { label: 'Profile', to: '/profile' },
-                ],
+                links: userLinks,
+                bookingConfirmationAction: showBookingConfirmation
+                    ? { label: 'Booking Confirmation', to: '/booking-confirmation' }
+                    : null,
                 primaryAction: { label: 'Logout', action: onLogout },
             };
         }
@@ -50,7 +55,7 @@ const NavBar = ({ role, onLogout, userName }) => {
             primaryAction: { label: 'Sign In', to: '/login' },
             secondaryAction: { label: 'Register', to: '/register' },
         };
-    }, [role, onLogout]);
+    }, [role, onLogout, showBookingConfirmation]);
 
     const toggleMobile = () => setMobileOpen((prev) => !prev);
 
@@ -74,6 +79,24 @@ const NavBar = ({ role, onLogout, userName }) => {
 
     const renderActions = (onItemClick) => (
         <Stack direction="row" spacing={1} alignItems="center">
+            {navigation.bookingConfirmationAction && (
+                <Button
+                    component={RouterLink}
+                    to={navigation.bookingConfirmationAction.to}
+                    variant="contained"
+                    onClick={onItemClick}
+                    sx={{
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        backgroundColor: '#d32f2f',
+                        '&:hover': { backgroundColor: '#b71c1c' },
+                    }}
+                >
+                    {navigation.bookingConfirmationAction.label}
+                </Button>
+            )}
+
             {navigation.secondaryAction && (
                 <Button
                     component={RouterLink}
@@ -202,12 +225,14 @@ NavBar.propTypes = {
     role: PropTypes.oneOf(['guest', 'user', 'admin']),
     onLogout: PropTypes.func,
     userName: PropTypes.string,
+    showBookingConfirmation: PropTypes.bool,
 };
 
 NavBar.defaultProps = {
     role: 'guest',
     onLogout: undefined,
     userName: '',
+    showBookingConfirmation: false,
 };
 
 export default NavBar;
