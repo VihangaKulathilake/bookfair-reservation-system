@@ -30,6 +30,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final List<PaymentProvider> paymentProviders;
+    private final com.bookfair.backend.service.QrCodeService qrCodeService;
 
     @Override
     public Object processPayment(PaymentRequest paymentRequest) {
@@ -47,6 +48,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .amount(reservation.getTotalAmount())
                     .paymentMethod(paymentRequest.getPaymentMethod())
                     .paymentDate(LocalDateTime.now())
+                    .paymentStatus(PaymentStatus.PENDING) // Default to pending for cash
                     .build();
 
             reservation.setReservationStatus(ReservationStatus.PENDING);
@@ -77,6 +79,9 @@ public class PaymentServiceImpl implements PaymentService {
 
         payment.setPaymentStatus(PaymentStatus.SUCCESS);
         payment.getReservation().setReservationStatus(ReservationStatus.CONFIRMED);
+        
+        // Generate QR and Email
+        qrCodeService.processPaymentSuccess(payment.getReservation());
 
         return mapToPaymentResponse(payment);
     }
@@ -92,7 +97,15 @@ public class PaymentServiceImpl implements PaymentService {
         // Find the correct provider and delegate
         PaymentProvider provider = getProvider(method);
 
-        return provider.confirmPayment(referenceId, reservationId);
+        PaymentResponse response = provider.confirmPayment(referenceId, reservationId);
+        
+        if (response.getPaymentStatus() == PaymentStatus.SUCCESS) {
+             Reservation reservation = reservationRepository.findById(reservationId)
+                     .orElseThrow(() -> new RuntimeException(CommonMessages.RESERVATION_NOT_FOUND));
+             qrCodeService.processPaymentSuccess(reservation);
+        }
+
+        return response;
     }
 
     // Getters
