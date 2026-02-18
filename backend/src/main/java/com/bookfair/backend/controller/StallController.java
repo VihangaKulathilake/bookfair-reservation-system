@@ -20,6 +20,7 @@ public class StallController {
     public StallResponse createStall(@RequestBody StallRequest stallRequest) {
         return stallService.createStall(stallRequest);
     }
+
     @GetMapping(ApiEndpoints.GET_STALL_BY_ID)
     public StallResponse getStallById(@PathVariable Long stallId) {
         return stallService.getStallById(stallId);
@@ -38,5 +39,15 @@ public class StallController {
     @GetMapping(ApiEndpoints.GET_STALLS_BY_SIZE)
     public List<StallResponse> getStallsBySize(@PathVariable StallSize stallSize) {
         return stallService.getStallsBySize(stallSize);
+    }
+
+    @PutMapping("/update/{id}")
+    public StallResponse updateStall(@PathVariable Long id, @RequestBody StallRequest stallRequest) {
+        return stallService.updateStall(id, stallRequest);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public void deleteStall(@PathVariable Long id) {
+        stallService.deleteStall(id);
     }
 }

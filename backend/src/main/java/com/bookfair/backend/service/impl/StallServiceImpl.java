@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class StallServiceImpl implements StallService {
 
     private final StallRepository stallRepository;
+
     @Override
     public StallResponse createStall(StallRequest stallRequest) {
         if (stallRepository.existsByStallCode(stallRequest.getStallCode())) {
@@ -64,6 +65,30 @@ public class StallServiceImpl implements StallService {
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public StallResponse updateStall(Long id, StallRequest stallRequest) {
+        Stall stall = stallRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CommonMessages.STALL_NOT_FOUND));
+
+        stall.setStallCode(stallRequest.getStallCode());
+        stall.setStallSize(stallRequest.getStallSize());
+        stall.setPrice(stallRequest.getPrice());
+
+        // If status is updated via request, it should be handled.
+        // Assuming StallRequest might need a status field or we use default logic.
+        // For now, only updating fields present in StallRequest.
+
+        return mapToResponse(stallRepository.save(stall));
+    }
+
+    @Override
+    public void deleteStall(Long id) {
+        if (!stallRepository.existsById(id)) {
+            throw new RuntimeException(CommonMessages.STALL_NOT_FOUND);
+        }
+        stallRepository.deleteById(id);
     }
 
     private StallResponse mapToResponse(Stall stall) {
