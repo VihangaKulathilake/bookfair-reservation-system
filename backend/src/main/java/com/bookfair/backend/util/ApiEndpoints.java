@@ -43,4 +43,9 @@ public final class ApiEndpoints {
     public static final String GET_ALL_PAYMENTS = "/all";
     public static final String GET_PAYMENTS_BY_USER_ID = "/{userId}";
 
+    
+    // ===================== GENRES =====================
+    public static final String GENRE_BASE = "/api/vendor/genres";
+    public static final String CREATE_GENRE = "/create";
+    public static final String GET_ALL_GENRES = "/all";
 }

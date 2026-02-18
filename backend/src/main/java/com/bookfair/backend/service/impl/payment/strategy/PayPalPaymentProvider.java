@@ -13,7 +13,7 @@ import com.bookfair.backend.service.payment.strategy.PaymentProvider;
 import com.bookfair.backend.util.CommonMessages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
+import com.bookfair.backend.service.QrCodeService;
 import java.time.LocalDateTime;
 
 @Service
@@ -23,7 +23,7 @@ public class PayPalPaymentProvider implements PaymentProvider {
     private final PayPalService payPalService;
     private final PaymentRepository paymentRepository;
     private final ReservationRepository reservationRepository;
-
+    private final QrCodeService qrCodeService;
 
     @Override
     public PaymentMethod getSupportedMethod() {
@@ -53,11 +53,13 @@ public class PayPalPaymentProvider implements PaymentProvider {
         if (success) {
             reservation.setReservationStatus(com.bookfair.backend.enums.ReservationStatus.CONFIRMED);
             reservationRepository.save(reservation);
+
+            // Generate QR and Send Email
+            qrCodeService.processPaymentSuccess(reservation);
         }
 
         return mapToResponse(payment);
     }
-
 
     // Get reservation amount
     private Double getReservationAmount(Long reservationId) {
