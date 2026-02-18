@@ -2,10 +2,9 @@ package com.bookfair.backend.model;
 
 import com.bookfair.backend.enums.StallSize;
 import com.bookfair.backend.enums.StallStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -35,5 +34,6 @@ public class Stall {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reservation_id")
+    @JsonIgnore
     private Reservation reservation;
 }
