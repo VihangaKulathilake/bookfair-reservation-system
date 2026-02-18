@@ -11,6 +11,7 @@ import com.bookfair.backend.repository.ReservationRepository;
 import com.bookfair.backend.repository.StallRepository;
 import com.bookfair.backend.repository.UserRepository;
 import com.bookfair.backend.service.ReservationService;
+import com.bookfair.backend.service.QrCodeService;
 import com.bookfair.backend.util.CommonMessages;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +29,24 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationRepository reservationRepository;
     private final StallRepository stallRepository;
 
+    private final QrCodeService qrCodeService;
+
     @Transactional
     @Override
     public ReservationResponse createReservation(ReservationRequest reservationRequest) {
 
         User user = userRepository.findById(reservationRequest.getUserId())
                 .orElseThrow(() -> new RuntimeException(CommonMessages.USER_NOT_FOUND));
+
+        List<Reservation> userReservations = reservationRepository.findByUserId(user.getId());
+        long activeStallsCount = userReservations.stream()
+                .filter(r -> r.getReservationStatus() != ReservationStatus.CANCELLED)
+                .mapToLong(r -> r.getStalls().size())
+                .sum();
+
+        if (activeStallsCount + reservationRequest.getStallIds().size() > 3) {
+            throw new RuntimeException(CommonMessages.MAX_STALLS_EXCEEDED);
+        }
 
         List<Stall> stalls = stallRepository.findAllById(reservationRequest.getStallIds());
 
@@ -45,7 +58,6 @@ public class ReservationServiceImpl implements ReservationService {
             throw new RuntimeException(CommonMessages.MAX_STALLS_EXCEEDED);
         }
 
-        // Check availability
         for (Stall stall : stalls) {
             if (stall.getStallStatus() != StallStatus.AVAILABLE) {
                 throw new RuntimeException(CommonMessages.STALL_NOT_AVAILABLE);
@@ -62,15 +74,12 @@ public class ReservationServiceImpl implements ReservationService {
         double totalAmount = 0;
 
         for (Stall stall : stalls) {
-
             stall.setReservation(savedReservation);
             stall.setStallStatus(StallStatus.RESERVED);
-
             totalAmount += stall.getPrice();
         }
 
         savedReservation.setTotalAmount(totalAmount);
-
         stallRepository.saveAll(stalls);
         reservationRepository.save(savedReservation);
 
@@ -101,6 +110,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    @Transactional
     public ReservationResponse cancelReservation(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException(CommonMessages.RESERVATION_NOT_FOUND));
@@ -111,11 +121,59 @@ public class ReservationServiceImpl implements ReservationService {
             stall.setReservation(null);
             stall.setStallStatus(StallStatus.AVAILABLE);
         }
-
         stallRepository.saveAll(reservation.getStalls());
-        reservationRepository.save(reservation);
+        return mapToResponse(reservationRepository.save(reservation));
+    }
 
-        return mapToResponse(reservation);
+    @Override
+    public ReservationResponse updateReservationStatus(Long id, String status) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CommonMessages.RESERVATION_NOT_FOUND));
+
+        try {
+            ReservationStatus newStatus = ReservationStatus.valueOf(status.toUpperCase());
+            reservation.setReservationStatus(newStatus);
+
+            if (newStatus == ReservationStatus.CANCELLED) {
+                return cancelReservation(id);
+            }
+
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid status");
+        }
+
+        return mapToResponse(reservationRepository.save(reservation));
+    }
+
+    @Override
+    public void deleteReservation(Long id) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CommonMessages.RESERVATION_NOT_FOUND));
+
+        for (Stall stall : reservation.getStalls()) {
+            stall.setReservation(null);
+            stall.setStallStatus(StallStatus.AVAILABLE);
+        }
+        stallRepository.saveAll(reservation.getStalls());
+
+        reservationRepository.deleteById(id);
+    }
+
+    @Override
+    public byte[] generateQrCode(Long reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException(CommonMessages.RESERVATION_NOT_FOUND));
+
+        if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
+            throw new RuntimeException(CommonMessages.QR_CODE_ONLY_FOR_CONFIRMED);
+        }
+
+        String content = "Reservation ID: " + reservation.getId() +
+                "\nUser: " + reservation.getUser().getEmail() +
+                "\nStalls: "
+                + reservation.getStalls().stream().map(Stall::getStallCode).collect(Collectors.joining(", "));
+
+        return qrCodeService.generateQrCode(content, 300, 300);
     }
 
     private ReservationResponse mapToResponse(Reservation reservation) {
