@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@jakarta.transaction.Transactional
 public class QrCodeServiceImpl implements QrCodeService {
 
     private final QrPassRepository qrPassRepository;

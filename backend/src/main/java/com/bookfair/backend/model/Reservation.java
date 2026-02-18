@@ -24,7 +24,7 @@ public class Reservation {
     private User user;
 
     @OneToMany(mappedBy = "reservation")
-    private List<Stall> stalls;
+    private List<Stall> stalls = new java.util.ArrayList<>();
 
     private Double totalAmount;
 
