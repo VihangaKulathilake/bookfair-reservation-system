@@ -38,6 +38,7 @@ const EmptyState = ({ title, description, actionLabel, onAction }) => {
                     {description}
                 </Typography>
                 {actionLabel && (
+
                     <Button
                         variant="contained"
                         color="primary"
@@ -48,6 +49,7 @@ const EmptyState = ({ title, description, actionLabel, onAction }) => {
                     >
                         {actionLabel}
                     </Button>
+                    
                 )}
             </Paper>
         </Box>
