@@ -46,7 +46,7 @@ const Settings = () => {
 
                     <Divider variant="inset" component="li" />
                  
-                    {/*Dark mode */}
+                    {/*Dark mode*/}
                     <ListItem>
                         <ListItemIcon>
                             <DarkMode color="primary" />
