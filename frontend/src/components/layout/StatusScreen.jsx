@@ -8,6 +8,7 @@ const StatusScreen = ({ type = 'success', title, message, actionLabel, onAction 
     const isSuccess = type === 'success';
 
     return (
+        
         <Box
             sx={{
                 display: 'flex',
