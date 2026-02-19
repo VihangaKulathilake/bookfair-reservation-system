@@ -29,6 +29,7 @@ const Profile = () => {
 
     return (
         <Box sx={{ maxWidth: 900, mx: 'auto' }}>
+            
             <Typography variant="h4" gutterBottom color="primary" sx={{ mb: 3 }}>
                 Company Profile
             </Typography>
