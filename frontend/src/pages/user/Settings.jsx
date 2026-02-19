@@ -30,7 +30,7 @@ const Settings = () => {
             <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
                 <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
 
-                    {/*notificationn  */}
+                    {/*notificationn*/}
                     <ListItem>
 
                         <ListItemIcon>
