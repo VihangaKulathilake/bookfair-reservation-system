@@ -71,7 +71,8 @@ const BookingConfirmation = () => {
 		setCompanyForm((previous) => ({
 			...previous,
 			[name]: value,
-		}));
+		})); 
+		
 	};
 
 	const handleConfirmAndBook = () => {
