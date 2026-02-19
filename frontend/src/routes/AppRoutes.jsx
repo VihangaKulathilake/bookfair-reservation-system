@@ -3,16 +3,22 @@ import LandingPage from '../pages/LandingPage';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import ForgotPassword from '../pages/auth/ForgotPassword';
+
+// Admin Pages
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminVendors from '../pages/admin/AdminVendors';
 import AdminReservations from '../pages/admin/AdminReservations';
 import AdminPayments from '../pages/admin/AdminPayments';
 import AdminGenres from '../pages/admin/AdminGenres';
 
+// User/Vendor Pages
 import UserDashboard from '../pages/user/UserDashboard';
 import VendorStalls from '../pages/user/VendorStalls';
 import VendorReservations from '../pages/user/VendorReservations';
 import VendorGenres from '../pages/user/VendorGenres';
+import StallSelection from '../pages/user/StallSelection';
+import BookingConfirmation from '../pages/user/BookingConfirmation';
+
 import { getStoredAuth } from '../api/dashboardApi';
 
 const RequireRole = ({ expectedRole, children }) => {
@@ -49,6 +55,12 @@ const AppRoutes = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/dashboard" element={<DashboardRedirect />} />
+
+            {/* Public/User Booking Flow */}
+            <Route path="/stall-selection" element={<StallSelection />} />
+            <Route path="/stall-reservation" element={<StallSelection />} />
+            <Route path="/stallselection" element={<StallSelection />} />
+            <Route path="/booking-confirmation" element={<BookingConfirmation />} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<RequireRole expectedRole="EMPLOYEE"><AdminDashboard /></RequireRole>} />
