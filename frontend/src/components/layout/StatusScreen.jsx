@@ -31,7 +31,9 @@ const StatusScreen = ({ type = 'success', title, message, actionLabel, onAction 
                         width: '100%',
                         borderRadius: 4,
                     }}
+                    
                 >
+
                     {isSuccess ? (
                         <CheckCircleOutline sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
                     ) : (
@@ -55,7 +57,7 @@ const StatusScreen = ({ type = 'success', title, message, actionLabel, onAction 
                         fullWidth
                         sx={{ py: 1.5, borderRadius: 2 }}
                     >
-                        
+
                         {actionLabel || 'Go to Home'}
                     </Button>
                 </Paper>
