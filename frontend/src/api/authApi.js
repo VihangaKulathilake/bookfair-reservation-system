@@ -1,4 +1,5 @@
 import client from './client';
+import { resolveRoleByEmail } from './dashboardApi';
 
 /**
  * Log in the user
@@ -9,17 +10,27 @@ import client from './client';
 export const loginUser = async (email, password) => {
     try {
         const response = await client.post('/auth/login', { email, password });
-        
-        // Assuming the backend returns { token: '...', user: { ... } }
+
         if (response.data.token) {
             localStorage.setItem('authToken', response.data.token);
-            if (response.data.user) {
-                localStorage.setItem('user', JSON.stringify(response.data.user));
-            }
+
+            const roleData = await resolveRoleByEmail(email);
+            const userData = {
+                businessName: response.data.businessName ?? '',
+                email,
+                role: roleData.role,
+                userId: roleData.userId,
+            };
+            localStorage.setItem('user', JSON.stringify(userData));
         }
-        
-        return { success: true, data: response.data };
+
+        return { success: true, data: response.data, user: JSON.parse(localStorage.getItem('user')) };
     } catch (error) {
+        console.error("Login Error Details:", error);
+        if (error.response) {
+            console.error("Response Data:", error.response.data);
+            console.error("Response Status:", error.response.status);
+        }
         // Extract error message from backend response if available
         const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
         throw new Error(message);

@@ -65,9 +65,9 @@ const Login = () => {
             const response = await loginUser(formData.email, formData.password);
             if (response.success) {
                 setSnackbar({ open: true, message: 'Login successful! Redirecting...', severity: 'success' });
-                // Store token/user info here if needed
+                const destination = response.user?.role === 'EMPLOYEE' ? '/admin' : '/vendor';
                 setTimeout(() => {
-                    navigate('/dashboard');
+                    navigate(destination);
                 }, 1500);
             }
         } catch (error) {
