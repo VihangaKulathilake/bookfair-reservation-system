@@ -8,7 +8,6 @@ const StatusScreen = ({ type = 'success', title, message, actionLabel, onAction 
     const isSuccess = type === 'success';
 
     return (
-        
         <Box
             sx={{
                 display: 'flex',
@@ -56,6 +55,7 @@ const StatusScreen = ({ type = 'success', title, message, actionLabel, onAction 
                         fullWidth
                         sx={{ py: 1.5, borderRadius: 2 }}
                     >
+                        
                         {actionLabel || 'Go to Home'}
                     </Button>
                 </Paper>
