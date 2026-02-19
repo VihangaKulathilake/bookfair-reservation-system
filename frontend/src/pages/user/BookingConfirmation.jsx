@@ -34,6 +34,7 @@ const BookingConfirmation = () => {
 	const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 	const [formError, setFormError] = useState('');
 
+<<<<<<< Updated upstream
 	const bookingHistory = useMemo(() => {
 		const fromState = state?.bookingId
 			? [{
@@ -43,6 +44,16 @@ const BookingConfirmation = () => {
 				confirmedAt: state.confirmedAt || new Date().toISOString(),
 			}]
 			: [];
+=======
+    // demo booking details
+    const bookingDetails = {
+        id: 'BK-7829',
+        stalls: ['A-12 (Small)', 'A-13 (Small)'],
+        totalAmount: '$200',
+        date: '2025-09-20',
+        email: 'publisher@example.com',
+    };
+>>>>>>> Stashed changes
 
 		try {
 			const historyRaw = localStorage.getItem(BOOKING_HISTORY_STORAGE_KEY);
