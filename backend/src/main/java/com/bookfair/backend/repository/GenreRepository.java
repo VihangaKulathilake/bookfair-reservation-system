@@ -12,4 +12,6 @@ public interface GenreRepository extends JpaRepository<Genre, Long> {
     List<Genre> findAllByUserEmail(String email);
 
     boolean existsByNameAndUserEmail(String name, String email);
+
+    void deleteByUserId(Long userId);
 }

@@ -61,10 +61,18 @@ const AdminVendors = () => {
                 fetchVendors();
                 setAlert({ open: false });
             } catch (error) {
+                const rawMessage = error.response?.data?.message || "";
+                // Simplify technical messages
+                let displayMessage = "Can't delete vendor. There are pending payments or active stalls.";
+
+                if (rawMessage && !rawMessage.includes("org.hibernate") && !rawMessage.includes("Exception")) {
+                    displayMessage = rawMessage;
+                }
+
                 setAlert({
                     open: true,
                     title: "Can't Delete Vendor",
-                    message: error.response?.data?.message || "Can't delete vendor. There are pending payments or active stalls.",
+                    message: displayMessage,
                     severity: 'warning'
                 });
             }
