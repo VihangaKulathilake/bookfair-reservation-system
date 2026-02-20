@@ -51,6 +51,11 @@ public class ReservationController {
         reservationService.deleteReservation(id);
     }
 
+    @PutMapping("/{id}")
+    public ReservationResponse updateReservation(@PathVariable Long id, @RequestBody ReservationRequest reservationRequest) {
+        return reservationService.updateReservation(id, reservationRequest);
+    }
+
     @GetMapping(value = "/{id}/qr", produces = org.springframework.http.MediaType.IMAGE_PNG_VALUE)
     public byte[] generateQrCode(@PathVariable Long id) {
         return reservationService.generateQrCode(id);

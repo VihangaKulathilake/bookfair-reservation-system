@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface StallRepository extends JpaRepository<Stall, Long> {
     boolean existsByStallCode(String stallCode);
+    boolean existsByStallCodeAndIdNot(String stallCode, Long id);
     List<Stall> findByStallStatus(StallStatus stallStatus);
     List<Stall> findByStallSize(StallSize stallSize);
 }

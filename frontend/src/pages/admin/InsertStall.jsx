@@ -23,6 +23,7 @@ import {
 import AdminNavbar from '../../components/layout/AdminNavbar';
 import SiteFooter from '../../components/layout/SiteFooter';
 import { createStall } from '../../api/stallsApi';
+import ModernAlert from '../../components/common/ModernAlert';
 
 const InsertStall = () => {
     const theme = useTheme();
@@ -32,7 +33,7 @@ const InsertStall = () => {
         price: '',
     });
 
-    const [alert, setAlert] = useState({ show: false, message: '', severity: 'success' });
+    const [alert, setAlert] = useState({ show: false, title: '', message: '', severity: 'success' });
     const [loading, setLoading] = useState(false);
 
     const stallSizes = [
@@ -58,6 +59,7 @@ const InsertStall = () => {
             await createStall(formData);
             setAlert({
                 show: true,
+                title: 'Success!',
                 message: 'Stall added successfully!',
                 severity: 'success'
             });
@@ -65,7 +67,8 @@ const InsertStall = () => {
         } catch (error) {
             setAlert({
                 show: true,
-                message: error.message,
+                title: "Can't Create Stall",
+                message: error.message || "Failed to create stall. Please check if the code is unique.",
                 severity: 'error'
             });
         } finally {
@@ -110,11 +113,13 @@ const InsertStall = () => {
 
                         <Divider sx={{ mb: 4 }} />
 
-                        {alert.show && (
-                            <Alert severity={alert.severity} sx={{ mb: 3 }} onClose={() => setAlert({ ...alert, show: false })}>
-                                {alert.message}
-                            </Alert>
-                        )}
+                        <ModernAlert
+                            open={alert.show}
+                            title={alert.title}
+                            message={alert.message}
+                            severity={alert.severity}
+                            onClose={() => setAlert({ ...alert, show: false })}
+                        />
 
                         <form onSubmit={handleSubmit}>
                             <Grid container spacing={3}>

@@ -13,4 +13,6 @@ public interface PaymentService {
     PaymentResponse confirmPayment(String referenceId, PaymentMethod paymentMethod, Long reservationId);
     PaymentResponse getPaymentById(Long id);
     List<PaymentResponse> getAllPayments();
+    PaymentResponse updatePayment(Long id, PaymentRequest paymentRequest);
+    void deletePayment(Long id);
 }

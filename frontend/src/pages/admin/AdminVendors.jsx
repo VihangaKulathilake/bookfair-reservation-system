@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-    Button, IconButton, TextField, Dialog, DialogActions, DialogContent,
-    DialogTitle, Typography, Box, CircularProgress, Container, useTheme, alpha
+    Typography, Box, CircularProgress, Container, useTheme, alpha,
+    IconButton, Tooltip, Stack, Dialog, DialogTitle, DialogContent,
+    DialogActions, TextField, Button, Divider
 } from '@mui/material';
-import { Edit, Delete } from '@mui/icons-material';
+import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from '../../components/layout/AdminNavbar';
 import SiteFooter from '../../components/layout/SiteFooter';
 import { logoutUser } from '../../api/authApi';
 import { getVendors, updateVendor, deleteVendor, getStoredAuth } from '../../api/dashboardApi';
+import ModernAlert from '../../components/common/ModernAlert';
 
 const AdminVendors = () => {
     const theme = useTheme();
@@ -19,6 +21,7 @@ const AdminVendors = () => {
     const [editOpen, setEditOpen] = useState(false);
     const [selectedVendor, setSelectedVendor] = useState(null);
     const [formData, setFormData] = useState({ businessName: '', contactNumber: '' });
+    const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'warning' });
     const user = getStoredAuth();
 
     const handleLogout = () => {
@@ -56,8 +59,14 @@ const AdminVendors = () => {
             try {
                 await deleteVendor(id);
                 fetchVendors();
+                setAlert({ open: false });
             } catch (error) {
-                alert("Failed to delete vendor");
+                setAlert({
+                    open: true,
+                    title: "Can't Delete Vendor",
+                    message: error.response?.data?.message || "Can't delete vendor. There are pending payments or active stalls.",
+                    severity: 'warning'
+                });
             }
         }
     };
@@ -80,11 +89,19 @@ const AdminVendors = () => {
                 <Container maxWidth="xl">
                     <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
-                            <Typography variant="h4" fontWeight={800} color="text.primary">Manage Vendors</Typography>
+                            <Typography variant="h4" fontWeight={800} color="text.primary" sx={{ letterSpacing: '-0.5px' }}>Manage Vendors</Typography>
                             <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>Overview of all registered businesses and contact details.</Typography>
                         </Box>
                         {loading && <CircularProgress size={24} color="secondary" />}
                     </Box>
+
+                    <ModernAlert
+                        open={alert.open}
+                        title={alert.title}
+                        message={alert.message}
+                        severity={alert.severity}
+                        onClose={() => setAlert({ ...alert, open: false })}
+                    />
 
                     <TableContainer component={Paper} elevation={0} sx={{ borderRadius: '24px', border: '1px solid', borderColor: alpha(theme.palette.divider, 0.1), overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.04)' }}>
                         <Table sx={{ minWidth: 800 }}>
@@ -112,26 +129,28 @@ const AdminVendors = () => {
                                         <TableCell sx={{ color: 'text.secondary' }}>{vendor.email}</TableCell>
                                         <TableCell sx={{ color: 'text.secondary' }}>{vendor.contactNumber || 'Not Provided'}</TableCell>
                                         <TableCell align="right" sx={{ pr: 4 }}>
-                                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                                                <Button
-                                                    variant="contained"
-                                                    color="secondary"
-                                                    size="small"
-                                                    onClick={() => handleEditClick(vendor)}
-                                                    sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, px: 2, boxShadow: `0 4px 12px ${alpha(theme.palette.secondary.main, 0.2)}` }}
-                                                >
-                                                    Edit
-                                                </Button>
-                                                <Button
-                                                    variant="outlined"
-                                                    color="error"
-                                                    size="small"
-                                                    onClick={() => handleDeleteClick(vendor.id)}
-                                                    sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, px: 2 }}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </Box>
+                                            <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                                <Tooltip title="Edit Vendor">
+                                                    <IconButton
+                                                        size="small"
+                                                        color="primary"
+                                                        onClick={() => handleEditClick(vendor)}
+                                                        sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), '&:hover': { bgcolor: theme.palette.primary.main, color: 'white' } }}
+                                                    >
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Delete Vendor">
+                                                    <IconButton
+                                                        size="small"
+                                                        color="error"
+                                                        onClick={() => handleDeleteClick(vendor.id)}
+                                                        sx={{ bgcolor: alpha(theme.palette.error.main, 0.05), '&:hover': { bgcolor: theme.palette.error.main, color: 'white' } }}
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Stack>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -163,26 +182,27 @@ const AdminVendors = () => {
                         }}
                     >
                         <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>Edit Vendor Details</DialogTitle>
+                        <Divider sx={{ mx: 3 }} />
                         <DialogContent>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Update business information for this vendor.</Typography>
-                            <TextField
-                                margin="dense"
-                                label="Business Name"
-                                fullWidth
-                                variant="outlined"
-                                value={formData.businessName}
-                                onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                                sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                            />
-                            <TextField
-                                margin="dense"
-                                label="Contact Number"
-                                fullWidth
-                                variant="outlined"
-                                value={formData.contactNumber}
-                                onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                            />
+                            <Stack spacing={2.5}>
+                                <TextField
+                                    label="Business Name"
+                                    fullWidth
+                                    variant="outlined"
+                                    value={formData.businessName}
+                                    onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                                />
+                                <TextField
+                                    label="Contact Number"
+                                    fullWidth
+                                    variant="outlined"
+                                    value={formData.contactNumber}
+                                    onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                                />
+                            </Stack>
                         </DialogContent>
                         <DialogActions sx={{ p: 3, pt: 1 }}>
                             <Button onClick={() => setEditOpen(false)} sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, color: 'text.secondary' }}>Cancel</Button>
