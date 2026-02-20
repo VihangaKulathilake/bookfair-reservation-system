@@ -136,6 +136,43 @@ public class PaymentServiceImpl implements PaymentService {
                 .toList();
     }
 
+    @Override
+    public PaymentResponse updatePayment(Long id, PaymentRequest paymentRequest) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CommonMessages.PAYMENT_NOT_FOUND));
+
+        if (paymentRequest.getAmount() != null) {
+            payment.setAmount(paymentRequest.getAmount());
+        }
+        if (paymentRequest.getPaymentStatus() != null) {
+            payment.setPaymentStatus(paymentRequest.getPaymentStatus());
+        }
+        if (paymentRequest.getPaymentMethod() != null) {
+            payment.setPaymentMethod(paymentRequest.getPaymentMethod());
+        }
+        if (paymentRequest.getTransactionId() != null) {
+            payment.setTransactionId(paymentRequest.getTransactionId());
+        }
+
+        return mapToPaymentResponse(paymentRepository.save(payment));
+    }
+
+    @Override
+    public void deletePayment(Long id) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CommonMessages.PAYMENT_NOT_FOUND));
+
+        // [GUARDRAIL] Audit Shield: Block deletion of successful or pending payments
+        if (payment.getPaymentStatus() == com.bookfair.backend.enums.PaymentStatus.SUCCESS) {
+            throw new RuntimeException("Can't delete successful payments.");
+        }
+        if (payment.getPaymentStatus() == com.bookfair.backend.enums.PaymentStatus.PENDING) {
+            throw new RuntimeException("Can't delete pending payments.");
+        }
+
+        paymentRepository.delete(payment);
+    }
+
     // Helper methods
     private PaymentProvider getProvider(PaymentMethod method) {
         return paymentProviders.stream()

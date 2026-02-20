@@ -9,6 +9,8 @@ import { logoutUser } from '../../api/authApi';
 import { getStoredAuth, getVendorById } from '../../api/dashboardApi';
 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowBack, ArrowForward } from '@mui/icons-material';
 
 // Steps definition
 const steps = ['Select Stalls', 'Company Details', 'Confirmation'];
@@ -128,17 +130,35 @@ const ReservationWizard = () => {
                         </Stepper>
 
                         <Box sx={{ mt: 2, mb: 2 }}>
+
                             {/* Navigation Buttons (Top) - Only for Step 0 */}
                             {activeStep === 0 && (
                                 <Box sx={{ display: 'flex', flexDirection: 'row', pt: 0, pb: 2, justifyContent: 'flex-end' }}>
-                                    <Button
-                                        variant="contained"
-                                        onClick={handleNext}
-                                        disabled={selectedStalls.length === 0}
-                                        size="large"
+                                    <motion.div
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
                                     >
-                                        Next Step &gt;
-                                    </Button>
+                                        <Button
+                                            variant="contained"
+                                            onClick={handleNext}
+                                            disabled={selectedStalls.length === 0}
+                                            size="large"
+                                            endIcon={<ArrowForward />}
+                                            sx={{
+                                                borderRadius: 3,
+                                                px: 4,
+                                                py: 1.5,
+                                                fontWeight: 700,
+                                                textTransform: 'none',
+                                                boxShadow: '0 4px 14px 0 rgba(0,118,255,0.39)',
+                                                '&:hover': {
+                                                    boxShadow: '0 6px 20px rgba(0,118,255,0.23)',
+                                                }
+                                            }}
+                                        >
+                                            Next Step
+                                        </Button>
+                                    </motion.div>
                                 </Box>
                             )}
 
@@ -154,18 +174,38 @@ const ReservationWizard = () => {
                                 </React.Fragment>
                             ) : (
                                 <React.Fragment>
-                                    {getStepContent(activeStep)}
+                                    <AnimatePresence mode="wait">
+                                        <motion.div
+                                            key={activeStep}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            {getStepContent(activeStep)}
+                                        </motion.div>
+                                    </AnimatePresence>
 
                                     {/* Bottom Navigation (Back Button) */}
                                     <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2, justifyContent: 'flex-start', mt: 3 }}>
-                                        <Button
-                                            color="inherit"
-                                            disabled={activeStep === 0}
-                                            onClick={handleBack}
-                                            sx={{ mr: 1 }}
+                                        <motion.div
+                                            whileHover={{ x: -4 }}
+                                            whileTap={{ scale: 0.95 }}
                                         >
-                                            Back
-                                        </Button>
+                                            <Button
+                                                color="inherit"
+                                                onClick={activeStep === 0 ? () => navigate('/user/dashboard') : handleBack}
+                                                startIcon={<ArrowBack />}
+                                                sx={{
+                                                    borderRadius: 2,
+                                                    fontWeight: 600,
+                                                    textTransform: 'none',
+                                                    px: 3
+                                                }}
+                                            >
+                                                {activeStep === 0 ? 'Back to Dashboard' : 'Back'}
+                                            </Button>
+                                        </motion.div>
                                     </Box>
                                 </React.Fragment>
                             )}

@@ -1,19 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-    Button, Typography, Box, Chip, Container, useTheme, alpha, CircularProgress
+    Button, Typography, Box, Chip, Container, useTheme, alpha, CircularProgress,
+    IconButton, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+    MenuItem, Stack, Divider
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from '../../components/layout/AdminNavbar';
 import SiteFooter from '../../components/layout/SiteFooter';
 import { logoutUser } from '../../api/authApi';
-import { getAllReservations, updateReservationStatus, deleteReservation, getStoredAuth } from '../../api/dashboardApi';
+import { getAllReservations, updateReservationStatus, deleteReservation, updateReservation, getStoredAuth } from '../../api/dashboardApi';
+import { Edit as EditIcon, Delete as DeleteIcon, CheckCircle, Cancel } from '@mui/icons-material';
+import ModernAlert from '../../components/common/ModernAlert';
 
 const AdminReservations = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const [reservations, setReservations] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [selectedReservation, setSelectedReservation] = useState(null);
+    const [editData, setEditData] = useState({ totalAmount: '', reservationStatus: '' });
+    const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'warning' });
     const user = getStoredAuth();
 
     const handleLogout = () => {
@@ -37,23 +45,61 @@ const AdminReservations = () => {
         }
     };
 
-    const handleStatusChange = async (id, status) => {
+    const handleStatusUpdate = async (id, status) => {
         try {
             await updateReservationStatus(id, status);
             fetchReservations();
+            setAlert({ open: false });
         } catch (error) {
-            alert("Failed to update status");
+            setAlert({
+                open: true,
+                title: 'Operation Failed',
+                message: error.response?.data?.message || "Could not update the reservation status. Please try again.",
+                severity: 'error'
+            });
         }
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this reservation?")) {
-            try {
-                await deleteReservation(id);
-                fetchReservations();
-            } catch (error) {
-                alert("Failed to delete reservation");
-            }
+        try {
+            await deleteReservation(id);
+            fetchReservations();
+            setAlert({ open: false });
+        } catch (error) {
+            setAlert({
+                open: true,
+                title: "Can't Delete Reservation",
+                message: error.response?.data?.message || "Can't delete active reservations.",
+                severity: 'warning'
+            });
+        }
+    };
+
+    const handleEditClick = (res) => {
+        setSelectedReservation(res);
+        setEditData({
+            totalAmount: res.totalAmount || 0,
+            reservationStatus: res.reservationStatus
+        });
+        setEditDialogOpen(true);
+    };
+
+    const handleEditSave = async () => {
+        try {
+            await updateReservation(selectedReservation.reservationId, {
+                totalAmount: parseFloat(editData.totalAmount),
+                reservationStatus: editData.reservationStatus
+            });
+            setEditDialogOpen(false);
+            fetchReservations();
+            setAlert({ open: false });
+        } catch (error) {
+            setAlert({
+                open: true,
+                title: 'Update Failed',
+                message: error.response?.data?.message || "There was an error saving the changes to this reservation.",
+                severity: 'error'
+            });
         }
     };
 
@@ -65,11 +111,19 @@ const AdminReservations = () => {
                 <Container maxWidth="xl">
                     <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
-                            <Typography variant="h4" fontWeight={800} color="text.primary">Manage Reservations</Typography>
+                            <Typography variant="h4" fontWeight={800} color="text.primary" sx={{ letterSpacing: '-0.5px' }}>Manage Reservations</Typography>
                             <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>View and manage all book stall reservations.</Typography>
                         </Box>
                         {loading && <CircularProgress size={24} color="secondary" />}
                     </Box>
+
+                    <ModernAlert
+                        open={alert.open}
+                        title={alert.title}
+                        message={alert.message}
+                        severity={alert.severity}
+                        onClose={() => setAlert({ ...alert, open: false })}
+                    />
 
                     <TableContainer component={Paper} elevation={0} sx={{ borderRadius: '24px', border: '1px solid', borderColor: alpha(theme.palette.divider, 0.1), overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.04)' }}>
                         <Table sx={{ minWidth: 800 }}>
@@ -161,47 +215,52 @@ const AdminReservations = () => {
                                             />
                                         </TableCell>
                                         <TableCell align="right" sx={{ pr: 4 }}>
-                                            {res.reservationStatus === 'PENDING' ? (
-                                                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                                                    <Button
+                                            <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                                {res.reservationStatus === 'PENDING' && (
+                                                    <>
+                                                        <Tooltip title="Approve">
+                                                            <IconButton
+                                                                size="small"
+                                                                color="success"
+                                                                onClick={() => handleStatusUpdate(res.reservationId, 'CONFIRMED')}
+                                                                sx={{ bgcolor: alpha(theme.palette.success.main, 0.1), '&:hover': { bgcolor: theme.palette.success.main, color: 'white' } }}
+                                                            >
+                                                                <CheckCircle fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Reject">
+                                                            <IconButton
+                                                                size="small"
+                                                                color="error"
+                                                                onClick={() => handleStatusUpdate(res.reservationId, 'CANCELLED')}
+                                                                sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), '&:hover': { bgcolor: theme.palette.error.main, color: 'white' } }}
+                                                            >
+                                                                <Cancel fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </>
+                                                )}
+                                                <Tooltip title="Edit Reservation">
+                                                    <IconButton
                                                         size="small"
-                                                        variant="contained"
-                                                        color="secondary"
-                                                        onClick={() => handleStatusChange(res.reservationId, 'CONFIRMED')}
-                                                        sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, px: 2, py: 0.8, boxShadow: `0 4px 12px ${alpha(theme.palette.secondary.main, 0.2)}` }}
+                                                        color="primary"
+                                                        onClick={() => handleEditClick(res)}
+                                                        sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), '&:hover': { bgcolor: theme.palette.primary.main, color: 'white' } }}
                                                     >
-                                                        Approve
-                                                    </Button>
-                                                    <Button
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Delete Permanently">
+                                                    <IconButton
                                                         size="small"
-                                                        variant="outlined"
-                                                        color="error"
-                                                        onClick={() => handleStatusChange(res.reservationId, 'CANCELLED')}
-                                                        sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, px: 2, py: 0.8 }}
-                                                    >
-                                                        Reject
-                                                    </Button>
-                                                </Box>
-                                            ) : (
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'flex-end' }}>
-                                                    <Button
-                                                        size="small"
-                                                        variant="outlined"
                                                         color="error"
                                                         onClick={() => handleDelete(res.reservationId)}
-                                                        sx={{
-                                                            borderRadius: '10px',
-                                                            textTransform: 'none',
-                                                            fontWeight: 600,
-                                                            fontSize: '0.75rem',
-                                                            opacity: 0.6,
-                                                            '&:hover': { opacity: 1 }
-                                                        }}
+                                                        sx={{ bgcolor: alpha(theme.palette.error.main, 0.05), '&:hover': { bgcolor: theme.palette.error.main, color: 'white' } }}
                                                     >
-                                                        Delete Record
-                                                    </Button>
-                                                </Box>
-                                            )}
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Stack>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -224,6 +283,60 @@ const AdminReservations = () => {
                             </TableBody>
                         </Table>
                     </TableContainer>
+
+                    {/* Edit Dialog */}
+                    <Dialog
+                        open={editDialogOpen}
+                        onClose={() => setEditDialogOpen(false)}
+                        PaperProps={{ sx: { borderRadius: 4, p: 1, width: '100%', maxWidth: 450 } }}
+                    >
+                        <DialogTitle sx={{ fontWeight: 800, fontSize: '1.25rem' }}>Edit Reservation #{selectedReservation?.reservationId}</DialogTitle>
+                        <Divider sx={{ mx: 3 }} />
+                        <DialogContent>
+                            <Stack spacing={3} sx={{ mt: 1 }}>
+                                <Box>
+                                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', mb: 1, display: 'block' }}>
+                                        Vendor Details
+                                    </Typography>
+                                    <Typography variant="body2" fontWeight={600}>{selectedReservation?.businessName}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{selectedReservation?.email}</Typography>
+                                </Box>
+
+                                <TextField
+                                    label="Total Amount (Rs.)"
+                                    type="number"
+                                    fullWidth
+                                    variant="outlined"
+                                    value={editData.totalAmount}
+                                    onChange={(e) => setEditData({ ...editData, totalAmount: e.target.value })}
+                                />
+
+                                <TextField
+                                    select
+                                    label="Reservation Status"
+                                    fullWidth
+                                    value={editData.reservationStatus}
+                                    onChange={(e) => setEditData({ ...editData, reservationStatus: e.target.value })}
+                                >
+                                    <MenuItem value="PENDING">PENDING</MenuItem>
+                                    <MenuItem value="CONFIRMED">CONFIRMED</MenuItem>
+                                    <MenuItem value="CANCELLED">CANCELLED</MenuItem>
+                                </TextField>
+                            </Stack>
+                        </DialogContent>
+                        <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
+                            <Button onClick={() => setEditDialogOpen(false)} color="inherit" sx={{ fontWeight: 700, textTransform: 'none' }}>Cancel</Button>
+                            <Button
+                                onClick={handleEditSave}
+                                variant="contained"
+                                color="primary"
+                                sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none', px: 4 }}
+                                disableElevation
+                            >
+                                Save Changes
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
                 </Container>
             </Box>
             <SiteFooter />

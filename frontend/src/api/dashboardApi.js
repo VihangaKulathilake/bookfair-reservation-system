@@ -98,6 +98,20 @@ export const confirmCashPayment = async (paymentId) => {
     return response.data;
 };
 
+export const updateReservation = async (id, payload) => {
+    const response = await client.put(`/reservations/${id}`, payload);
+    return response.data;
+};
+
+export const updatePayment = async (id, payload) => {
+    const response = await client.put(`/payments/${id}`, payload);
+    return response.data;
+};
+
+export const deletePayment = async (id) => {
+    await client.delete(`/payments/${id}`);
+};
+
 export const getGenresByVendor = async (vendorEmail) => {
     const response = await client.get('/vendor/genres', {
         params: { vendorEmail },
@@ -132,6 +146,20 @@ export const cancelReservation = async (id) => {
 export const getAvailableStalls = async () => {
     const response = await client.get('/stalls/available');
     return response.data ?? [];
+};
+
+export const getAllStalls = async () => {
+    const response = await client.get('/stalls/all');
+    return response.data ?? [];
+};
+
+export const deleteStall = async (id) => {
+    await client.delete(`/stalls/${id}`);
+};
+
+export const updateStall = async (id, data) => {
+    const response = await client.put(`/stalls/update/${id}`, data);
+    return response.data;
 };
 
 export const getStoredAuth = () => {

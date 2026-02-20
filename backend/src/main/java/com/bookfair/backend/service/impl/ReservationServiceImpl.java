@@ -150,9 +150,37 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    @Transactional
+    public ReservationResponse updateReservation(Long id, ReservationRequest reservationRequest) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.RESERVATION_NOT_FOUND));
+
+        if (reservationRequest.getTotalAmount() != null) {
+            reservation.setTotalAmount(reservationRequest.getTotalAmount());
+        }
+
+        if (reservationRequest.getReservationStatus() != null) {
+            reservation.setReservationStatus(reservationRequest.getReservationStatus());
+
+            if (reservationRequest.getReservationStatus() == ReservationStatus.CANCELLED) {
+                // Return result of cancelReservation for full cleanup
+                return cancelReservation(id);
+            }
+        }
+
+        return mapToResponse(reservationRepository.save(reservation));
+    }
+
+    @Override
     public void deleteReservation(Long id) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.RESERVATION_NOT_FOUND));
+
+        // [GUARDRAIL] Stall Shield: Block deletion of active or confirmed reservations
+        if (reservation.getReservationStatus() == ReservationStatus.PENDING || 
+            reservation.getReservationStatus() == ReservationStatus.CONFIRMED) {
+            throw new ValidationException(CommonMessages.STALL_IN_ACTIVE_RESERVATION);
+        }
 
         for (Stall stall : reservation.getStalls()) {
             stall.setReservation(null);

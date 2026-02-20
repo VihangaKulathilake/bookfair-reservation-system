@@ -49,4 +49,14 @@ public class PaymentController {
     public List<PaymentResponse> getPaymentsByUserId(@PathVariable Long userId) {
         return paymentService.getPaymentsByUserId(userId);
     }
+
+    @PutMapping("/{id}")
+    public PaymentResponse updatePayment(@PathVariable Long id, @RequestBody PaymentRequest paymentRequest) {
+        return paymentService.updatePayment(id, paymentRequest);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deletePayment(@PathVariable Long id) {
+        paymentService.deletePayment(id);
+    }
 }

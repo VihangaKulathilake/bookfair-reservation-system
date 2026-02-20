@@ -44,7 +44,7 @@ const AdminNavbar = ({ onLogout, userName }) => {
         { label: 'Reservations', to: '/admin/reservations', icon: <CalendarCheck size={18} /> },
         { label: 'Payments', to: '/admin/payments', icon: <Store size={18} /> }, // Using Store as placeholder for Payments
         { label: 'Genres', to: '/admin/genres', icon: <Grid size={18} /> },
-        { label: 'Reports', to: '/admin/reports', icon: <FileBarChart size={18} /> },
+        { label: 'Stalls', to: '/admin/stalls', icon: <Store size={18} /> },
         { label: 'Add Stall', to: '/admin/insert-stall', icon: <Store size={18} /> },
     ];
 

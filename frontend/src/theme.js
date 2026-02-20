@@ -18,6 +18,12 @@ const theme = createTheme({
         error: {
             main: "#D32F2F",
         },
+        warning: {
+            main: "#ED6C02",
+        },
+        info: {
+            main: "#0288D1",
+        },
     },
     typography: {
         fontFamily: "Roboto, sans-serif",

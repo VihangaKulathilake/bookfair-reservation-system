@@ -31,4 +31,9 @@ public class CommonMessages {
     public static final String GENRE_NOT_FOUND = "Genre not found";
     public static final String UNAUTHORIZED_ACCESS = "Unauthorized to update this genre";
 
+    // Deletion Guardrails
+    public static final String VENDOR_HAS_PENDING_PAYMENTS = "Can't delete vendor. There are pending payments or active stalls.";
+    public static final String PAYMENT_ALREADY_SUCCESSFUL = "Can't delete pending payments.";
+    public static final String STALL_IN_ACTIVE_RESERVATION = "Can't delete active reservations.";
+
 }
