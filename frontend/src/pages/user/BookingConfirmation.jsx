@@ -245,7 +245,7 @@ const BookingConfirmation = ({ bookingDetails }) => {
 					<Button component={RouterLink} to="/user/dashboard" autoFocus>
 						Go to Dashboard
 					</Button>
-					<Button component={RouterLink} to="/user/reservations">
+					<Button component={RouterLink} to="/user/reservations" >
 						My Reservations
 					</Button>
 				</DialogActions>
