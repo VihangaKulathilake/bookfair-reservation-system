@@ -41,17 +41,22 @@ public class ReservationController {
         return reservationService.getReservationByUserId(userId);
     }
 
-    @PutMapping("/{id}/status")
+    @PutMapping(ApiEndpoints.UPDATE_RESERVATION_STATUS)
     public ReservationResponse updateReservationStatus(@PathVariable Long id, @RequestParam String status) {
         return reservationService.updateReservationStatus(id, status);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(ApiEndpoints.DELETE_RESERVATION)
     public void deleteReservation(@PathVariable Long id) {
         reservationService.deleteReservation(id);
     }
 
-    @GetMapping(value = "/{id}/qr", produces = org.springframework.http.MediaType.IMAGE_PNG_VALUE)
+    @PutMapping(ApiEndpoints.UPDATE_RESERVATION)
+    public ReservationResponse updateReservation(@PathVariable Long id, @RequestBody ReservationRequest reservationRequest) {
+        return reservationService.updateReservation(id, reservationRequest);
+    }
+
+    @GetMapping(value = ApiEndpoints.GENERATE_QR, produces = org.springframework.http.MediaType.IMAGE_PNG_VALUE)
     public byte[] generateQrCode(@PathVariable Long id) {
         return reservationService.generateQrCode(id);
     }

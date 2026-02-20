@@ -2,6 +2,7 @@ package com.bookfair.backend.controller;
 
 import com.bookfair.backend.model.User;
 import com.bookfair.backend.service.UserService;
+import com.bookfair.backend.util.ApiEndpoints;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping(ApiEndpoints.ADMIN_BASE)
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class AdminController {
@@ -17,22 +18,22 @@ public class AdminController {
     private final UserService userService;
 
     // Manage Vendors
-    @GetMapping("/vendors")
+    @GetMapping(ApiEndpoints.GET_ALL_VENDORS)
     public ResponseEntity<List<User>> getAllVendors() {
         return ResponseEntity.ok(userService.getAllVendors());
     }
 
-    @GetMapping("/vendors/{id}")
+    @GetMapping(ApiEndpoints.GET_ALL_VENDORS_BY_ID)
     public ResponseEntity<User> getVendorById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getVendorById(id));
     }
 
-    @PutMapping("/vendors/{id}")
+    @PutMapping(ApiEndpoints.UPDATE_VENDOR)
     public ResponseEntity<User> updateVendor(@PathVariable Long id, @RequestBody User user) {
         return ResponseEntity.ok(userService.updateVendor(id, user));
     }
 
-    @DeleteMapping("/vendors/{id}")
+    @DeleteMapping(ApiEndpoints.DELETE_VENDOR)
     public ResponseEntity<Void> deleteVendor(@PathVariable Long id) {
         userService.deleteVendor(id);
         return ResponseEntity.noContent().build();

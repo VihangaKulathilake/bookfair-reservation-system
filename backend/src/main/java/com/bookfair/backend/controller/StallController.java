@@ -41,12 +41,12 @@ public class StallController {
         return stallService.getStallsBySize(stallSize);
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping(ApiEndpoints.UPDATE_STALL)
     public StallResponse updateStall(@PathVariable Long id, @RequestBody StallRequest stallRequest) {
         return stallService.updateStall(id, stallRequest);
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping(ApiEndpoints.DELETE_STALL)
     public void deleteStall(@PathVariable Long id) {
         stallService.deleteStall(id);
     }

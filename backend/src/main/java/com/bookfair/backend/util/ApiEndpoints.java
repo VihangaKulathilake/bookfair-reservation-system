@@ -9,11 +9,15 @@ public final class ApiEndpoints {
     public static final String LOGIN = "/login";
 
     // ===================== USERS =====================
+    public static final String ADMIN_BASE = "/api/admin";
+    public static final String GET_ALL_VENDORS = "/vendors";
+    public static final String GET_ALL_VENDORS_BY_ID = "/vendors/{id}";
+    public static final String UPDATE_VENDOR = "/vendors/{id}";
+    public static final String DELETE_VENDOR = "/vendors/{id}";
     public static final String USER_BASE = "/api/users";
-    public static final String GET_ALL_USERS = "/all";
     public static final String GET_USER_BY_ID = "/{id}";
-    public static final String UPDATE_USER = "/update/{id}";
-    public static final String DELETE_USER = "/delete/{id}";
+    public static final String GET_USER_BY_EMAIL = "/by-email";
+    public static final String UPDATE_USER = "/{id}";
 
     // ===================== RESERVATIONS =====================
     public static final String RESERVATION_BASE = "/api/reservations";
@@ -22,6 +26,10 @@ public final class ApiEndpoints {
     public static final String CREATE_RESERVATION = "/create";
     public static final String CANCEL_RESERVATION = "/cancel/{id}";
     public static final String GET_RESERVATION_BY_USER_ID = "/user/{id}";
+    public static final String UPDATE_RESERVATION_STATUS = "/{id}/status";
+    public static final String DELETE_RESERVATION = "/{id}";
+    public static final String UPDATE_RESERVATION = "/{id}";
+    public static final String GENERATE_QR = "/{id}/qr";
 
 
     // ===================== STALLS =====================
@@ -42,10 +50,18 @@ public final class ApiEndpoints {
     public static final String GET_PAYMENT_BY_ID = "/{paymentId}";
     public static final String GET_ALL_PAYMENTS = "/all";
     public static final String GET_PAYMENTS_BY_USER_ID = "/{userId}";
+    public static final String UPDATE_PAYMENT = "/{id}";
+    public static final String DELETE_PAYMENT = "/{id}";
 
     
     // ===================== GENRES =====================
     public static final String GENRE_BASE = "/api/vendor/genres";
     public static final String CREATE_GENRE = "/create";
     public static final String GET_ALL_GENRES = "/all";
+    public static final String UPDATE_GENRE = "/{id}";
+    public static final String DELETE_GENRE = "/{id}";
+
+    // ======================== QR ========================
+    public static final String QR_BASE = "/api/qr";
+    public static final String VERIFY_QR = "/verify";
 }

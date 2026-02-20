@@ -49,4 +49,14 @@ public class PaymentController {
     public List<PaymentResponse> getPaymentsByUserId(@PathVariable Long userId) {
         return paymentService.getPaymentsByUserId(userId);
     }
+
+    @PutMapping(ApiEndpoints.UPDATE_PAYMENT)
+    public PaymentResponse updatePayment(@PathVariable Long id, @RequestBody PaymentRequest paymentRequest) {
+        return paymentService.updatePayment(id, paymentRequest);
+    }
+
+    @DeleteMapping(ApiEndpoints.DELETE_PAYMENT)
+    public void deletePayment(@PathVariable Long id) {
+        paymentService.deletePayment(id);
+    }
 }
