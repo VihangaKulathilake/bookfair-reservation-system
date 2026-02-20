@@ -12,7 +12,7 @@ import {
     alpha,
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { Visibility, VisibilityOff, Email, Lock, Person, PersonAdd } from '@mui/icons-material';
+import { Visibility, VisibilityOff, Email, Lock, Person, PersonAdd, Phone, Business } from '@mui/icons-material';
 
 const SignUpForm = ({
     formData,
@@ -64,19 +64,86 @@ const SignUpForm = ({
                 margin="normal"
                 required
                 fullWidth
-                id="name"
-                label="Full Name"
-                name="name"
-                autoComplete="name"
+                id="businessName"
+                label="Business Name"
+                name="businessName"
+                autoComplete="organization"
                 autoFocus
-                value={formData.name}
+                value={formData.businessName}
                 onChange={handleChange}
-                error={!!errors.name}
-                helperText={errors.name}
+                error={!!errors.businessName}
+                helperText={errors.businessName}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <Business color="action" />
+                        </InputAdornment>
+                    ),
+                }}
+                sx={inputSx}
+            />
+            <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="contactPerson"
+                label="Contact Person"
+                name="contactPerson"
+                autoComplete="name"
+                value={formData.contactPerson}
+                onChange={handleChange}
+                error={!!errors.contactPerson}
+                helperText={errors.contactPerson}
                 InputProps={{
                     startAdornment: (
                         <InputAdornment position="start">
                             <Person color="action" />
+                        </InputAdornment>
+                    ),
+                }}
+                sx={inputSx}
+            />
+
+            <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="address"
+                label="Address"
+                name="address"
+                autoComplete="street-address"
+                multiline
+                rows={2}
+                value={formData.address}
+                onChange={handleChange}
+                error={!!errors.address}
+                helperText={errors.address}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <Business color="action" /> {/* Or Map icon if available, but Business is imported */}
+                        </InputAdornment>
+                    ),
+                }}
+                sx={inputSx}
+            />
+
+            <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="contactNumber"
+                label="Contact Number"
+                name="contactNumber"
+                autoComplete="tel"
+                value={formData.contactNumber}
+                onChange={handleChange}
+                error={!!errors.contactNumber}
+                helperText={errors.contactNumber}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <Phone color="action" />
                         </InputAdornment>
                     ),
                 }}

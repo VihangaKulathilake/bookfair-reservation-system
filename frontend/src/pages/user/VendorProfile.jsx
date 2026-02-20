@@ -188,8 +188,8 @@ const UserProfile = () => {
                                         startIcon={<Edit3 size={16} />}
                                         variant="outlined"
                                         size="small"
+                                        onClick={() => navigate('/user/profile/edit')}
                                         sx={{ borderRadius: '8px' }}
-                                        onClick={() => navigate('/user/edit-profile')}
                                     >
                                         Edit Profile
                                     </Button>

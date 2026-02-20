@@ -16,7 +16,7 @@ const loginImage = '/assets/login_pic.jpg'; // Ensure this matches public asset 
 const Login = () => {
     const navigate = useNavigate();
     const PASSWORD_MIN_LENGTH = 8;
-    
+
     // State
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [errors, setErrors] = useState({});
@@ -29,7 +29,7 @@ const Login = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-        
+
         // Clear error when user types
         if (errors[name]) {
             setErrors({ ...errors, [name]: '' });
@@ -54,7 +54,7 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!validateForm()) {
             setSnackbar({ open: true, message: 'Please fix the errors below.', severity: 'warning' });
             return;
@@ -65,16 +65,16 @@ const Login = () => {
             const response = await loginUser(formData.email, formData.password);
             if (response.success) {
                 setSnackbar({ open: true, message: 'Login successful! Redirecting...', severity: 'success' });
-                const destination = response.user?.role === 'EMPLOYEE' ? '/admin' : '/vendor';
+                const destination = response.user?.role === 'EMPLOYEE' ? '/admin/dashboard' : '/user/dashboard';
                 setTimeout(() => {
                     navigate(destination);
                 }, 1500);
             }
         } catch (error) {
-            setSnackbar({ 
-                open: true, 
-                message: error.message || 'Login failed. Please try again.', 
-                severity: 'error' 
+            setSnackbar({
+                open: true,
+                message: error.message || 'Login failed. Please try again.',
+                severity: 'error'
             });
         } finally {
             setLoading(false);
@@ -84,7 +84,7 @@ const Login = () => {
     const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
     return (
-        <AuthLayout 
+        <AuthLayout
             image={loginImage}
             title="BookFair"
             subtitle="Discover your next favorite book."
@@ -101,10 +101,10 @@ const Login = () => {
                 setRememberMe={setRememberMe}
                 passwordHelperText={errors.password || passwordRulesText(PASSWORD_MIN_LENGTH)}
             />
-            
-            <Snackbar 
-                open={snackbar.open} 
-                autoHideDuration={6000} 
+
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
                 onClose={handleCloseSnackbar}
                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             >

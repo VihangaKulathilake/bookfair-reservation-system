@@ -5,6 +5,7 @@ const ReservationStatusChip = ({ status }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'APPROVED':
+      case 'CONFIRMED':
         return 'success';
       case 'PENDING':
         return 'warning';
@@ -16,17 +17,13 @@ const ReservationStatusChip = ({ status }) => {
     }
   };
 
-  const getStatusLabel = (status) => {
-    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-  };
-
   return (
     <Chip
-      label={getStatusLabel(status)}
+      label={status}
       color={getStatusColor(status)}
-      variant="outlined" 
+      variant={status === 'PENDING' ? 'outlined' : 'filled'}
       size="small"
-      sx={{ fontWeight: 'bold' }}
+      sx={{ borderRadius: 1.5, fontWeight: 700, minWidth: 80 }}
     />
   );
 };
