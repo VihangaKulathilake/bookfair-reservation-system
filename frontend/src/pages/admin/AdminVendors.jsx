@@ -22,6 +22,8 @@ const AdminVendors = () => {
     const [selectedVendor, setSelectedVendor] = useState(null);
     const [formData, setFormData] = useState({ businessName: '', contactNumber: '' });
     const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'warning' });
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [vendorToDelete, setVendorToDelete] = useState(null);
     const user = getStoredAuth();
 
     const handleLogout = () => {
@@ -54,20 +56,40 @@ const AdminVendors = () => {
         setEditOpen(true);
     };
 
-    const handleDeleteClick = async (id) => {
-        if (window.confirm("Are you sure you want to delete this vendor? This will remove all their data from the system.")) {
-            try {
-                await deleteVendor(id);
-                fetchVendors();
-                setAlert({ open: false });
-            } catch (error) {
-                setAlert({
-                    open: true,
-                    title: "Can't Delete Vendor",
-                    message: error.response?.data?.message || "Can't delete vendor. There are pending payments or active stalls.",
-                    severity: 'warning'
-                });
+    const handleDeleteClick = (id) => {
+        setVendorToDelete(id);
+        setDeleteConfirmOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        const id = vendorToDelete;
+        try {
+            await deleteVendor(id);
+            fetchVendors();
+            setAlert({
+                open: true,
+                title: "Vendor Deleted",
+                message: "The vendor has been successfully removed.",
+                severity: 'success'
+            });
+        } catch (error) {
+            const rawMessage = error.response?.data?.message || "";
+            // Simplify technical messages
+            let displayMessage = "Can't delete vendor. There are pending payments or active stalls.";
+
+            if (rawMessage && !rawMessage.includes("org.hibernate") && !rawMessage.includes("Exception")) {
+                displayMessage = rawMessage;
             }
+
+            setAlert({
+                open: true,
+                title: "Can't Delete Vendor",
+                message: displayMessage,
+                severity: 'warning'
+            });
+        } finally {
+            setDeleteConfirmOpen(false);
+            setVendorToDelete(null);
         }
     };
 
@@ -77,7 +99,12 @@ const AdminVendors = () => {
             setEditOpen(false);
             fetchVendors();
         } catch (error) {
-            alert("Failed to update vendor");
+            setAlert({
+                open: true,
+                title: "Update Failed",
+                message: "Failed to update vendor information.",
+                severity: 'error'
+            });
         }
     };
 
@@ -163,7 +190,8 @@ const AdminVendors = () => {
                                             </Box>
                                         </TableCell>
                                     </TableRow>
-                                ) || loading && (
+                                )}
+                                {loading && (
                                     <TableRow>
                                         <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
                                             <CircularProgress size={40} color="secondary" />
@@ -174,6 +202,7 @@ const AdminVendors = () => {
                         </Table>
                     </TableContainer>
 
+                    {/* Edit Vendor Dialog */}
                     <Dialog
                         open={editOpen}
                         onClose={() => setEditOpen(false)}
@@ -207,6 +236,26 @@ const AdminVendors = () => {
                         <DialogActions sx={{ p: 3, pt: 1 }}>
                             <Button onClick={() => setEditOpen(false)} sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, color: 'text.secondary' }}>Cancel</Button>
                             <Button onClick={handleUpdate} variant="contained" color="secondary" sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, px: 4, boxShadow: `0 8px 16px ${alpha(theme.palette.secondary.main, 0.2)}` }}>Save Changes</Button>
+                        </DialogActions>
+                    </Dialog>
+
+                    {/* Delete Confirmation Dialog */}
+                    <Dialog
+                        open={deleteConfirmOpen}
+                        onClose={() => setDeleteConfirmOpen(false)}
+                        PaperProps={{ sx: { borderRadius: '20px', p: 1 } }}
+                    >
+                        <DialogTitle sx={{ fontWeight: 800 }}>Confirm Deletion</DialogTitle>
+                        <DialogContent>
+                            <Typography variant="body1">
+                                Are you sure you want to delete this vendor? This will remove all their data from the system. This action cannot be undone.
+                            </Typography>
+                        </DialogContent>
+                        <DialogActions sx={{ px: 3, pb: 2 }}>
+                            <Button onClick={() => setDeleteConfirmOpen(false)} sx={{ fontWeight: 700, color: 'text.secondary' }}>Cancel</Button>
+                            <Button onClick={handleDeleteConfirm} variant="contained" color="error" sx={{ fontWeight: 700, borderRadius: '12px', px: 3 }}>
+                                Delete Vendor
+                            </Button>
                         </DialogActions>
                     </Dialog>
                 </Container>

@@ -54,8 +54,10 @@ const UserDashboard = () => {
 
     const fetchStats = async () => {
         setLoading(true);
-        const userId = user?.userId || user?.id;
+        const userId = Number(user?.userId || user?.id);
         const userEmail = user?.email;
+
+        console.log("Dashboard Debug - Parsed UserId:", userId);
 
         // Prepare promises for independent execution
         const promises = [
@@ -73,6 +75,8 @@ const UserDashboard = () => {
             const paymentsData = results[2].status === 'fulfilled' ? results[2].value : [];
             const genresData = results[3].status === 'fulfilled' ? results[3].value : [];
 
+            console.log("Dashboard Debug - Raw Payments Data:", paymentsData);
+
             // Log errors if any failed
             results.forEach((result, index) => {
                 if (result.status === 'rejected') {
@@ -83,7 +87,7 @@ const UserDashboard = () => {
             setStats({
                 stalls: Array.isArray(stallsData) ? stallsData.length : 0,
                 reservations: Array.isArray(reservationsData) ? reservationsData.length : 0,
-                payments: Array.isArray(paymentsData) ? paymentsData.filter(p => !p.confirmed).length : 0, // Showing pending payments count
+                payments: Array.isArray(paymentsData) ? paymentsData.filter(p => p.paymentStatus?.toUpperCase() === 'PENDING').length : 0,
                 genres: Array.isArray(genresData) ? genresData.length : 0
             });
         } catch (error) {
@@ -101,12 +105,12 @@ const UserDashboard = () => {
     const overviewItems = [
         { title: 'AVAILABLE STALLS', count: stats.stalls, icon: <Storefront fontSize="large" />, color: '#E3F2FD', iconColor: '#1565C0', delay: 0 },
         { title: 'MY RESERVATIONS', count: stats.reservations, icon: <Event fontSize="large" />, color: '#FFF3E0', iconColor: '#EF6C00', delay: 0.1 },
-        { title: 'PAYMENTS', count: stats.payments, icon: <Payments fontSize="large" />, color: '#E8F5E9', iconColor: '#2E7D32', delay: 0.2 },
+        { title: 'PENDING PAYMENTS', count: stats.payments, icon: <Payments fontSize="large" />, color: '#E8F5E9', iconColor: '#2E7D32', delay: 0.2 },
         { title: 'MY GENRES', count: stats.genres, icon: <Category fontSize="large" />, color: '#E1F5FE', iconColor: '#0277BD', delay: 0.3 }
     ];
 
     const menuItems = [
-        { title: 'Reserve Stalls', description: 'Check availability & book', path: '/user/stalls', buttonText: 'Browse Stalls', icon: <Storefront fontSize="large" />, color: '#E3F2FD', iconColor: '#1565C0' },
+        { title: 'Reserve Stalls', description: 'Check availability & book', path: '/user/stall-reservation', buttonText: 'Browse Stalls', icon: <Storefront fontSize="large" />, color: '#E3F2FD', iconColor: '#1565C0' },
         { title: 'My Reservations', description: 'Manage your bookings', path: '/user/vendor-reservations', buttonText: 'View History', icon: <Event fontSize="large" />, color: '#FFF3E0', iconColor: '#EF6C00' },
         { title: 'Manage Genres', description: 'Update your book genres', path: '/user/genres', buttonText: 'Edit Genres', icon: <Category fontSize="large" />, color: '#E1F5FE', iconColor: '#0277BD' }
     ];

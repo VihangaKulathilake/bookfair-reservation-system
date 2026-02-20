@@ -10,6 +10,7 @@ import SiteFooter from '../../components/layout/SiteFooter';
 import { logoutUser } from '../../api/authApi';
 import { getStoredAuth, getReservationsByUserId, cancelReservation } from '../../api/dashboardApi';
 import { CalendarMonth, Storefront, MonetizationOn, Cancel, DeleteForever } from '@mui/icons-material';
+import ModernAlert from '../../components/common/ModernAlert';
 
 const MyReservations = () => {
     const theme = useTheme();
@@ -22,6 +23,7 @@ const MyReservations = () => {
     const [error, setError] = useState('');
     const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
     const [selectedReservationId, setSelectedReservationId] = useState(null);
+    const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'error' });
 
     const fetchReservations = async () => {
         if (!user || (!user.userId && !user.id)) {
@@ -65,10 +67,21 @@ const MyReservations = () => {
             await cancelReservation(selectedReservationId);
             setCancelDialogOpen(false);
             setSelectedReservationId(null);
+            setAlert({
+                open: true,
+                title: 'Success',
+                message: 'Reservation cancelled successfully.',
+                severity: 'success'
+            });
             fetchReservations(); // Refresh list
         } catch (err) {
             console.error("Failed to cancel reservation:", err);
-            alert('Failed to cancel reservation.');
+            setAlert({
+                open: true,
+                title: 'Cancellation Failed',
+                message: err.response?.data?.message || 'Failed to cancel reservation. Please try again.',
+                severity: 'error'
+            });
         }
     };
 
@@ -128,7 +141,7 @@ const MyReservations = () => {
                                 {getStatusChip(row.reservationStatus)}
                             </TableCell>
                             <TableCell align="right">
-                                {row.reservationStatus !== 'CANCELLED' && (
+                                {row.reservationStatus === 'PENDING' && (
                                     <Tooltip title="Cancel Reservation">
                                         <Button
                                             variant="outlined"
@@ -193,7 +206,7 @@ const MyReservations = () => {
                             </Box>
                         </Stack>
 
-                        {res.reservationStatus !== 'CANCELLED' && (
+                        {res.reservationStatus === 'PENDING' && (
                             <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
                                 <Button
                                     fullWidth
@@ -219,6 +232,14 @@ const MyReservations = () => {
 
             <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, md: 4 } }}>
                 <Container maxWidth="lg">
+                    <ModernAlert
+                        open={alert.open}
+                        title={alert.title}
+                        message={alert.message}
+                        severity={alert.severity}
+                        onClose={() => setAlert({ ...alert, open: false })}
+                    />
+
                     <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" mb={4} gap={2}>
                         <Box>
                             <Typography variant="h4" fontWeight={800} color="text.primary" sx={{ letterSpacing: '-0.5px' }}>
