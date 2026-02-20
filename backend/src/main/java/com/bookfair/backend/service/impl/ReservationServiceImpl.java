@@ -119,6 +119,10 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.RESERVATION_NOT_FOUND));
 
+        if (reservation.getReservationStatus() != ReservationStatus.PENDING) {
+            throw new ValidationException("Only pending reservations can be cancelled.");
+        }
+
         reservation.setReservationStatus(ReservationStatus.CANCELLED);
 
         for (Stall stall : reservation.getStalls()) {

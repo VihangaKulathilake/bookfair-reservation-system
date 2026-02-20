@@ -8,6 +8,7 @@ import './StallReservation.css';
 import { getStoredAuth } from '../../api/dashboardApi';
 import { getReservationByUserId as getReservationsByUserId } from '../../api/reservationsApi';
 import { logoutUser } from '../../api/authApi';
+import ModernAlert from '../../components/common/ModernAlert';
 
 import { getAllStalls } from '../../api/stallsApi';
 import mapImage from '../../assets/map.png';
@@ -56,6 +57,7 @@ const StallSelection = ({ onStallsSelected, initialSelected = [], isStandalone =
     const [backendStalls, setBackendStalls] = useState([]);
     const [loading, setLoading] = useState(true);
     const [reservedCount, setReservedCount] = useState(0);
+    const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'info' });
 
     // Fetch User Reservations to calculate remaining limit
     useEffect(() => {
@@ -191,7 +193,12 @@ const StallSelection = ({ onStallsSelected, initialSelected = [], isStandalone =
         const availableNow = Math.max(0, GLOBAL_LIMIT - reservedCount);
 
         if (currentOnPageCount >= availableNow) {
-            window.alert(`You have already reserved ${reservedCount} stalls. You can only select ${availableNow} more in this session.`);
+            setAlert({
+                open: true,
+                title: 'Selection Limit Reached',
+                message: `You have already reserved ${reservedCount} stalls. You can only select ${availableNow} more in this session.`,
+                severity: 'warning'
+            });
             return;
         }
 
@@ -367,6 +374,14 @@ const StallSelection = ({ onStallsSelected, initialSelected = [], isStandalone =
                         currentTotalSelected={currentOnPageSelectionCount}
                     />
                 )}
+
+                <ModernAlert
+                    open={alert.open}
+                    title={alert.title}
+                    message={alert.message}
+                    severity={alert.severity}
+                    onClose={() => setAlert({ ...alert, open: false })}
+                />
             </div>
         </div>
     );

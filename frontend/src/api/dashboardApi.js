@@ -89,7 +89,7 @@ export const getAllPayments = async () => {
 };
 
 export const getPaymentsByUserId = async (userId) => {
-    const response = await client.get(`/payments/${userId}`);
+    const response = await client.get(`/payments/user/${userId}`);
     return response.data ?? [];
 };
 

@@ -8,6 +8,7 @@ import UserNavbar from '../../components/layout/UserNavbar';
 import SiteFooter from '../../components/layout/SiteFooter';
 import { logoutUser } from '../../api/authApi';
 import { getAvailableStalls, createReservation, getStoredAuth } from '../../api/dashboardApi';
+import ModernAlert from '../../components/common/ModernAlert';
 
 const VendorStalls = () => {
     const theme = useTheme();
@@ -16,6 +17,7 @@ const VendorStalls = () => {
     const [selectedStalls, setSelectedStalls] = useState([]);
     const [open, setOpen] = useState(false);
     const [user] = useState(getStoredAuth());
+    const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'error' });
 
     const handleLogout = () => {
         logoutUser();
@@ -40,7 +42,12 @@ const VendorStalls = () => {
             setSelectedStalls(selectedStalls.filter(id => id !== stall.id));
         } else {
             if (selectedStalls.length >= 3) {
-                alert("You can select up to 3 stalls only.");
+                setAlert({
+                    open: true,
+                    title: 'Selection Limit',
+                    message: "You can select up to 3 stalls only.",
+                    severity: 'warning'
+                });
                 return;
             }
             setSelectedStalls([...selectedStalls, stall.id]);
@@ -49,7 +56,12 @@ const VendorStalls = () => {
 
     const handleReserve = async () => {
         if (!user) {
-            alert("Please login first");
+            setAlert({
+                open: true,
+                title: 'Authentication Required',
+                message: "Please login first",
+                severity: 'error'
+            });
             return;
         }
 
@@ -58,12 +70,22 @@ const VendorStalls = () => {
                 userId: user.userId,
                 stallIds: selectedStalls
             });
-            alert("Reservation created successfully!");
+            setAlert({
+                open: true,
+                title: 'Success',
+                message: "Reservation created successfully!",
+                severity: 'success'
+            });
             setOpen(false);
             setSelectedStalls([]);
             fetchStalls();
         } catch (error) {
-            alert("Failed to create reservation: " + (error.response?.data?.message || error.message));
+            setAlert({
+                open: true,
+                title: 'Reservation Failed',
+                message: (error.response?.data?.message || error.message),
+                severity: 'error'
+            });
         }
     };
 
@@ -118,6 +140,14 @@ const VendorStalls = () => {
                             <Button variant="contained" onClick={handleReserve}>Confirm</Button>
                         </DialogActions>
                     </Dialog>
+
+                    <ModernAlert
+                        open={alert.open}
+                        title={alert.title}
+                        message={alert.message}
+                        severity={alert.severity}
+                        onClose={() => setAlert({ ...alert, open: false })}
+                    />
                 </Container>
             </Box>
             <SiteFooter />
