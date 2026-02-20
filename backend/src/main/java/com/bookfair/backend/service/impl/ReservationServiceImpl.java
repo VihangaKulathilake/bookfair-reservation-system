@@ -98,6 +98,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    @Transactional
     public List<ReservationResponse> getReservationByUserId(Long userId) {
         return reservationRepository.findByUserId(userId)
                 .stream()
@@ -180,19 +181,35 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     private ReservationResponse mapToResponse(Reservation reservation) {
+        String businessName = "Unknown";
+        String email = "";
+        String contactNumber = "";
+        Long userId = null;
+        List<String> stallCodes = java.util.Collections.emptyList();
 
-        List<String> stallCodes = (reservation.getStalls() != null) ? reservation.getStalls()
-                .stream()
-                .map(Stall::getStallCode)
-                .toList() : java.util.Collections.emptyList();
+        if (reservation.getUser() != null) {
+            userId = reservation.getUser().getId();
+            businessName = reservation.getUser().getBusinessName();
+            email = reservation.getUser().getEmail();
+            contactNumber = reservation.getUser().getContactNumber();
+        }
+
+        if (reservation.getStalls() != null) {
+            stallCodes = reservation.getStalls().stream()
+                    .map(Stall::getStallCode)
+                    .collect(Collectors.toList());
+        }
 
         return ReservationResponse.builder()
                 .reservationId(reservation.getId())
-                .userId(reservation.getUser().getId())
+                .userId(userId)
                 .stallCodes(stallCodes)
                 .totalAmount(reservation.getTotalAmount())
                 .reservationDate(reservation.getReservationDate())
                 .reservationStatus(reservation.getReservationStatus())
+                .businessName(businessName)
+                .contactNumber(contactNumber)
+                .email(email)
                 .build();
     }
 }

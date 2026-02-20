@@ -31,6 +31,10 @@ public class User {
 
     private String contactNumber;
 
+    private String address;
+
+    private String contactPerson;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 
