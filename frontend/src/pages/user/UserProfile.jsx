@@ -123,7 +123,7 @@ const Profile = () => {
                                     onChange={handleChange}
                                     disabled={!isEditing}
                                     multiline
-                                    rows={3}
+                                    rows={2}
                                 />
                             </Grid>
                         </Grid>
