@@ -50,19 +50,34 @@ const PaymentSuccess = () => {
                     setStatus('success');
                     setMessage('Payment successful! Your reservation is confirmed.');
                 } else {
-                    setStatus('error');
-                    setMessage('Payment verification failed. Please contact support.');
+                    // Fallback: Check if reservation is already confirmed
+                    const resDetails = await client.get(`/reservations/${reservationId}`);
+                    if (resDetails.data.reservationStatus === 'CONFIRMED') {
+                        setStatus('success');
+                        setMessage('Your reservation is confirmed.');
+                    } else {
+                        setStatus('error');
+                        setMessage('Payment verification failed. Please contact support.');
+                    }
                 }
             } catch (error) {
                 console.error('Payment confirmation error:', error);
 
-                // If it's a duplicate entry error, we might want to check the status or treat as success if checking status
-                // But generally, the backend fix (idempotency) should handle this. 
-                // However, if the backend returns the existing payment, we assume success.
-                // If error persists, it's a real error.
+                // Fallback: Even on error, check if reservation actually succeeded
+                try {
+                    const resDetails = await client.get(`/reservations/${reservationId}`);
+                    if (resDetails.data.reservationStatus === 'CONFIRMED') {
+                        setStatus('success');
+                        setMessage('Your reservation is already confirmed.');
+                        return;
+                    }
+                } catch (fallbackError) {
+                    console.error('Fallback check failed:', fallbackError);
+                }
 
                 setStatus('error');
-                setMessage(error.response?.data?.message || 'An error occurred while confirming payment.');
+                const errMsg = error.response?.data?.message || error.message || 'An error occurred while confirming payment.';
+                setMessage(errMsg);
             }
         };
 

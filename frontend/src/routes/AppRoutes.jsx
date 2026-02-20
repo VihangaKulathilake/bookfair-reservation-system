@@ -32,6 +32,7 @@ import AdminReservations from '../pages/admin/AdminReservations';
 import AdminVendors from '../pages/admin/AdminVendors';
 import AdminPayments from '../pages/admin/AdminPayments';
 import AdminGenres from '../pages/admin/AdminGenres';
+import AdminStalls from '../pages/admin/AdminStalls';
 import Reports from '../pages/admin/Reports';
 import InsertStall from '../pages/admin/InsertStall';
 import AdminProfile from '../pages/admin/AdminProfile';
@@ -78,6 +79,7 @@ const AppRoutes = () => {
             <Route path="/admin/vendors" element={<AdminVendors />} />
             <Route path="/admin/payments" element={<AdminPayments />} />
             <Route path="/admin/genres" element={<AdminGenres />} />
+            <Route path="/admin/stalls" element={<AdminStalls />} />
             <Route path="/admin/reports" element={<Reports />} />
             <Route path="/admin/insert-stall" element={<InsertStall />} />
 

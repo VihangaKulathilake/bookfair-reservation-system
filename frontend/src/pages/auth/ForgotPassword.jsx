@@ -26,7 +26,7 @@ const ForgotPassword = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         const emailError = validateEmail(email);
         if (emailError) {
             setError(emailError);
@@ -39,17 +39,17 @@ const ForgotPassword = () => {
             const response = await resetPassword(email);
             if (response.success) {
                 setSubmitted(true);
-                setSnackbar({ 
-                    open: true, 
-                    message: 'Password reset link sent!', 
-                    severity: 'success' 
+                setSnackbar({
+                    open: true,
+                    message: 'Password reset link sent!',
+                    severity: 'success'
                 });
             }
         } catch (error) {
-            setSnackbar({ 
-                open: true, 
-                message: error.message || 'Failed to send reset link.', 
-                severity: 'error' 
+            setSnackbar({
+                open: true,
+                message: error.message || 'Failed to send reset link.',
+                severity: 'error'
             });
         } finally {
             setLoading(false);
@@ -59,7 +59,7 @@ const ForgotPassword = () => {
     const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
     return (
-        <AuthLayout 
+        <AuthLayout
             image={forgotPasswordImage}
             title="Recovery"
             subtitle="Get back into your account."
@@ -73,9 +73,9 @@ const ForgotPassword = () => {
                 submitted={submitted}
             />
 
-            <Snackbar 
-                open={snackbar.open} 
-                autoHideDuration={6000} 
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
                 onClose={handleCloseSnackbar}
                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             >

@@ -12,6 +12,9 @@ import { logoutUser } from '../../api/authApi';
 import { getAllStalls } from '../../api/stallsApi';
 import mapImage from '../../assets/map.png';
 
+import { ArrowForward } from '@mui/icons-material';
+import { motion } from 'framer-motion';
+
 const GLOBAL_LIMIT = 3;
 const MAP_IMAGE_SRC = mapImage;
 
@@ -249,31 +252,70 @@ const StallSelection = ({ onStallsSelected, initialSelected = [], isStandalone =
                         / {Math.max(0, dynamicMaxOnPage)} Available
                         {reservedCount > 0 && ` (${reservedCount} already reserved)`}
                     </span>
+
                     {isStandalone && (
-                        <button
-                            className="proceed-btn"
-                            disabled={currentGlobalSelection.length === 0}
-                            onClick={() => {
-                                navigate('/user/stall-reservation', {
-                                    state: {
-                                        selectedStalls: currentGlobalSelection,
-                                        initialStep: 1
-                                    }
-                                });
-                            }}
-                            style={{
-                                marginLeft: '20px',
-                                padding: '8px 16px',
-                                backgroundColor: currentGlobalSelection.length === 0 ? '#ccc' : '#28a745',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: currentGlobalSelection.length === 0 ? 'not-allowed' : 'pointer',
-                                fontSize: '1rem'
-                            }}
-                        >
-                            Proceed to Payment
-                        </button>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 2 }}>
+                            <motion.div
+                                whileHover={{ x: -4 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                <button
+                                    className="back-btn"
+                                    onClick={() => navigate('/user/dashboard')}
+                                    style={{
+                                        padding: '10px 24px',
+                                        backgroundColor: 'transparent',
+                                        color: theme.palette.text.secondary,
+                                        border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+                                        borderRadius: '30px',
+                                        cursor: 'pointer',
+                                        fontSize: '1rem',
+                                        fontWeight: 600,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    <ArrowBack fontSize="small" /> Back
+                                </button>
+                            </motion.div>
+
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                <button
+                                    className="proceed-btn"
+                                    disabled={currentGlobalSelection.length === 0}
+                                    onClick={() => {
+                                        navigate('/user/stall-reservation', {
+                                            state: {
+                                                selectedStalls: currentGlobalSelection,
+                                                initialStep: 1
+                                            }
+                                        });
+                                    }}
+                                    style={{
+                                        padding: '10px 24px',
+                                        backgroundColor: currentGlobalSelection.length === 0 ? '#e0e0e0' : theme.palette.primary.main,
+                                        color: currentGlobalSelection.length === 0 ? '#9e9e9e' : 'white',
+                                        border: 'none',
+                                        borderRadius: '30px',
+                                        cursor: currentGlobalSelection.length === 0 ? 'not-allowed' : 'pointer',
+                                        fontSize: '1rem',
+                                        fontWeight: 'bold',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        boxShadow: currentGlobalSelection.length === 0 ? 'none' : `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    Proceed to Payment <ArrowForward fontSize="small" />
+                                </button>
+                            </motion.div>
+                        </Box>
                     )}
                 </p>
 

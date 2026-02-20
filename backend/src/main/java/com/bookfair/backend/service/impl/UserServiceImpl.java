@@ -70,12 +70,21 @@ public class UserServiceImpl implements UserService {
     public void deleteVendor(Long id) {
         User user = getVendorById(id);
 
+        // [GUARDRAIL] Payment Shield: Check for pending payments
+        boolean hasPendingPayments = reservationRepository.findByUserId(id).stream()
+                .anyMatch(res -> res.getPayment() != null && res.getPayment().getPaymentStatus() == com.bookfair.backend.enums.PaymentStatus.PENDING);
+
+        if (hasPendingPayments) {
+            throw new RuntimeException(CommonMessages.VENDOR_HAS_PENDING_PAYMENTS);
+        }
+
         // Cancel active reservations
         List<Reservation> reservations = reservationRepository.findByUserId(id);
         for (Reservation reservation : reservations) {
             reservationService.cancelReservation(reservation.getId());
         }
 
+        userRepository.delete(user);
     }
 
     @Override

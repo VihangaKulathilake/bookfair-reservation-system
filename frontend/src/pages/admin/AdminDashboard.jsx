@@ -12,6 +12,7 @@ import {
     getAllReservations,
     getStoredAuth,
     getVendors,
+    getGenresByVendor
 } from '../../api/dashboardApi';
 
 import { People, EventNote, Payments, Category, RateReview, ArrowForward } from '@mui/icons-material';
@@ -105,7 +106,8 @@ const AdminDashboard = () => {
         { title: 'Manage Users', description: 'View, Update, Delete Vendors', path: '/admin/vendors', buttonText: 'Manage Users', icon: <People fontSize="large" />, color: '#EDE7F6', iconColor: '#5E35B1' },
         { title: 'Review Reservations', description: 'Approve, Reject, Delete', path: '/admin/reservations', buttonText: 'Review Reservations', icon: <RateReview fontSize="large" />, color: '#FFF3E0', iconColor: '#EF6C00' },
         { title: 'View Payments', description: 'Confirm Cash Payments', path: '/admin/payments', buttonText: 'View Payments', icon: <Payments fontSize="large" />, color: '#E8F5E9', iconColor: '#2E7D32' },
-        { title: 'View Genres', description: 'View Genres by Vendor', path: '/admin/genres', buttonText: 'View Genres', icon: <Category fontSize="large" />, color: '#E1F5FE', iconColor: '#0277BD' }
+        { title: 'View Genres', description: 'View Genres by Vendor', path: '/admin/genres', buttonText: 'View Genres', icon: <Category fontSize="large" />, color: '#E1F5FE', iconColor: '#0277BD' },
+        { title: 'Manage Stalls', description: 'View and Delete Stalls', path: '/admin/stalls', buttonText: 'Manage Stalls', icon: <Category fontSize="large" />, color: '#FCE4EC', iconColor: '#C2185B' }
     ];
 
     return (

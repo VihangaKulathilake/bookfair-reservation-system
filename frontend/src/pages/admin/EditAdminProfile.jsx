@@ -12,6 +12,8 @@ import AdminNavbar from '../../components/layout/AdminNavbar';
 import SiteFooter from '../../components/layout/SiteFooter';
 import { getStoredAuth, getUserById, updateUser } from '../../api/dashboardApi';
 import { logoutUser } from '../../api/authApi';
+import ModernAlert from '../../components/common/ModernAlert';
+import { User as UserIcon } from 'lucide-react';
 
 const EditAdminProfile = () => {
     const theme = useTheme();
@@ -26,7 +28,7 @@ const EditAdminProfile = () => {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const [snackbar, setSnackbar] = useState({ open: false, title: '', message: '', severity: 'success' });
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -40,7 +42,7 @@ const EditAdminProfile = () => {
                     });
                 } catch (error) {
                     console.error("Failed to fetch admin data:", error);
-                    setSnackbar({ open: true, message: 'Failed to load profile.', severity: 'error' });
+                    setSnackbar({ open: true, title: 'Profile Error', message: "Can't load profile details.", severity: 'error' });
                 } finally {
                     setLoading(false);
                 }
@@ -59,11 +61,11 @@ const EditAdminProfile = () => {
         setSaving(true);
         try {
             await updateUser(storedUser.userId, formData);
-            setSnackbar({ open: true, message: 'Profile updated successfully!', severity: 'success' });
+            setSnackbar({ open: true, title: 'Success!', message: 'Profile updated successfully!', severity: 'success' });
             setTimeout(() => navigate('/admin/profile'), 1500);
         } catch (error) {
             console.error("Update failed:", error);
-            setSnackbar({ open: true, message: 'Update failed.', severity: 'error' });
+            setSnackbar({ open: true, title: "Can't Update Profile", message: 'Saving changes failed. Please try again.', severity: 'error' });
         } finally {
             setSaving(false);
         }
@@ -132,6 +134,14 @@ const EditAdminProfile = () => {
                     </Box>
 
                     <Divider sx={{ mb: 4 }} />
+
+                    <ModernAlert
+                        open={snackbar.open}
+                        title={snackbar.title}
+                        message={snackbar.message}
+                        severity={snackbar.severity}
+                        onClose={() => setSnackbar({ ...snackbar, open: false })}
+                    />
 
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
@@ -213,9 +223,6 @@ const EditAdminProfile = () => {
             </Container>
 
             <SiteFooter />
-            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
-                <Alert severity={snackbar.severity} sx={{ width: '100%' }}>{snackbar.message}</Alert>
-            </Snackbar>
         </Box>
     );
 };
