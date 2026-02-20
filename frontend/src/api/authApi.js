@@ -17,9 +17,10 @@ export const loginUser = async (email, password) => {
             const roleData = await resolveRoleByEmail(email);
             const userData = {
                 businessName: response.data.businessName ?? '',
+                contactPerson: response.data.contactPerson ?? '',
                 email,
                 role: roleData.role,
-                userId: roleData.userId,
+                userId: response.data.userId || roleData.userId,
             };
             localStorage.setItem('user', JSON.stringify(userData));
         }

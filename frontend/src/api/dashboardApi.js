@@ -28,6 +28,11 @@ export const resolveRoleByEmail = async (email) => {
     };
 };
 
+export const getVendorById = async (id) => {
+    const response = await client.get(`/admin/vendors/${id}`);
+    return response.data;
+};
+
 export const getVendors = async () => {
     const response = await client.get('/admin/vendors');
     return response.data ?? [];
@@ -40,6 +45,21 @@ export const updateVendor = async (id, payload) => {
 
 export const deleteVendor = async (id) => {
     await client.delete(`/admin/vendors/${id}`);
+};
+
+export const getUserById = async (id) => {
+    const response = await client.get(`/users/${id}`);
+    return response.data;
+};
+
+export const getUserByEmail = async (email) => {
+    const response = await client.get(`/users/by-email`, { params: { email } });
+    return response.data;
+};
+
+export const updateUser = async (id, payload) => {
+    const response = await client.put(`/users/${id}`, payload);
+    return response.data;
 };
 
 export const getAllReservations = async () => {

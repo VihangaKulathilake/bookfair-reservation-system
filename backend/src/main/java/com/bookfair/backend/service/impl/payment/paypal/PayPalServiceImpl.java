@@ -17,7 +17,7 @@ public class PayPalServiceImpl implements PayPalService {
     private final PayPalHttpClient payPalHttpClient;
 
     @Override
-    public PayPalOrderResponse createOrder(Double amount) {
+    public PayPalOrderResponse createOrder(Double amount, Long reservationId) {
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.checkoutPaymentIntent("CAPTURE");
 
@@ -25,9 +25,9 @@ public class PayPalServiceImpl implements PayPalService {
         purchaseUnits.add(new PurchaseUnitRequest().amountWithBreakdown(new AmountWithBreakdown().currencyCode("USD").value(String.format("%.2f", amount))));
         orderRequest.purchaseUnits(purchaseUnits);
         
-        // Redirect URLs
+        // Redirect URLs with Reservation ID
         ApplicationContext applicationContext = new ApplicationContext()
-                .returnUrl("http://localhost:5173/payment/success")
+                .returnUrl("http://localhost:5173/payment/success?reservationId=" + reservationId)
                 .cancelUrl("http://localhost:5173/payment/cancel");
         orderRequest.applicationContext(applicationContext);
 

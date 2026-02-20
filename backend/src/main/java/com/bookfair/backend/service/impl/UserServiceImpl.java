@@ -40,12 +40,27 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User updateVendor(Long id, User userDetails) {
-        User user = getVendorById(id);
+        // Legacy support, verifying role
+        getVendorById(id);
+        return updateUser(id, userDetails);
+    }
 
-        user.setBusinessName(userDetails.getBusinessName());
-        user.setEmail(userDetails.getEmail());
-        user.setContactNumber(userDetails.getContactNumber());
-        // Password update logic if needed, skipping for now as not requested explicitly
+    @Override
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @Override
+    @Transactional
+    public User updateUser(Long id, User userDetails) {
+        User user = getUserById(id);
+
+        if (userDetails.getBusinessName() != null) user.setBusinessName(userDetails.getBusinessName());
+        if (userDetails.getEmail() != null) user.setEmail(userDetails.getEmail());
+        if (userDetails.getContactNumber() != null) user.setContactNumber(userDetails.getContactNumber());
+        if (userDetails.getAddress() != null) user.setAddress(userDetails.getAddress());
+        if (userDetails.getContactPerson() != null) user.setContactPerson(userDetails.getContactPerson());
 
         return userRepository.save(user);
     }
@@ -61,6 +76,11 @@ public class UserServiceImpl implements UserService {
             reservationService.cancelReservation(reservation.getId());
         }
 
-        userRepository.delete(user);
+    }
+
+    @Override
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
     }
 }

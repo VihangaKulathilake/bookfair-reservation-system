@@ -69,6 +69,7 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<GenreResponse> getGenresByVendor(String vendorEmail) {
         return genreRepository.findAllByUserEmail(vendorEmail).stream()
                 .map(this::mapToResponse)

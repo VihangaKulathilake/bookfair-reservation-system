@@ -37,7 +37,7 @@ public class ReservationController {
     }
 
     @GetMapping(ApiEndpoints.GET_RESERVATION_BY_USER_ID)
-    public List<ReservationResponse> getReservationByUserId(@PathVariable Long userId) {
+    public List<ReservationResponse> getReservationByUserId(@PathVariable("id") Long userId) {
         return reservationService.getReservationByUserId(userId);
     }
 

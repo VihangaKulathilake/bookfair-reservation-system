@@ -76,3 +76,14 @@ export const validatePasswordMatch = (password, confirmPassword) => {
     if (!confirmPassword) return "Please confirm your password";
     return password === confirmPassword ? "" : "Passwords do not match";
 };
+
+/**
+ * Validate phone number
+ * @param {string} phone - Phone number to validate
+ * @returns {string} Error message or empty string if valid
+ */
+export const validatePhoneNumber = (phone) => {
+    if (!phone) return "Contact number is required";
+    const phoneRegex = /^\d{10}$/; // Simple 10 digit validation
+    return phoneRegex.test(phone.replace(/[^0-9]/g, '')) ? "" : "Invalid phone number (10 digits required)";
+};
