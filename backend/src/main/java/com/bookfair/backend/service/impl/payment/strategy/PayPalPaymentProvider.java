@@ -34,11 +34,17 @@ public class PayPalPaymentProvider implements PaymentProvider {
 
         Double amount = getReservationAmount(reservationId);
 
-        return payPalService.createOrder(amount);
+        return payPalService.createOrder(amount, reservationId);
     }
 
     @Override
     public PaymentResponse confirmPayment(String orderId, Long reservationId) {
+        // Check if payment already exists for this reservation (Idempotency)
+        java.util.Optional<Payment> existingPayment = paymentRepository.findByReservationId(reservationId);
+        if (existingPayment.isPresent()) {
+            return mapToResponse(existingPayment.get());
+        }
+
         // capture the order from PayPal sandbox
         boolean success = payPalService.captureOrder(orderId);
 

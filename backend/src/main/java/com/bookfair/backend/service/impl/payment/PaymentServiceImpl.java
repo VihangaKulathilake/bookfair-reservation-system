@@ -144,6 +144,26 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new RuntimeException(CommonMessages.PAYMENT_PROVIDER_NOT_FOUND));
     }
     private PaymentResponse mapToPaymentResponse(Payment payment) {
+        Reservation reservation = payment.getReservation();
+        String businessName = "Unknown";
+        String email = "";
+        Long userId = null;
+        Long reservationId = null;
+        List<String> stallCodes = java.util.Collections.emptyList();
+
+        if (reservation != null) {
+            reservationId = reservation.getId();
+            User user = reservation.getUser();
+            if (user != null) {
+                userId = user.getId();
+                businessName = user.getBusinessName();
+                email = user.getEmail();
+            }
+            if (reservation.getStalls() != null) {
+                stallCodes = reservation.getStalls().stream().map(com.bookfair.backend.model.Stall::getStallCode).toList();
+            }
+        }
+
         return PaymentResponse.builder()
                 .paymentId(payment.getId())
                 .amount(payment.getAmount())
@@ -151,6 +171,11 @@ public class PaymentServiceImpl implements PaymentService {
                 .paymentMethod(payment.getPaymentMethod())
                 .paymentStatus(payment.getPaymentStatus())
                 .paymentDate(payment.getPaymentDate())
+                .reservationId(reservationId)
+                .userId(userId)
+                .businessName(businessName)
+                .email(email)
+                .stallCodes(stallCodes)
                 .build();
     }
 

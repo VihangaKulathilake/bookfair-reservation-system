@@ -4,7 +4,7 @@ import com.bookfair.backend.dto.PayPalOrderResponse;
 
 public interface PayPalService {
 
-    PayPalOrderResponse createOrder(Double amount);
+    PayPalOrderResponse createOrder(Double amount, Long reservationId);
 
     boolean captureOrder(String orderId);
 }

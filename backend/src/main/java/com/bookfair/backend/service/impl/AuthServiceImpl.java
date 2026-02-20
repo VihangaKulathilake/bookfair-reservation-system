@@ -37,13 +37,14 @@ public class AuthServiceImpl implements AuthService {
             user.setEmail(registerRequest.getEmail());
             user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
             user.setContactNumber(registerRequest.getContactNumber());
+            user.setAddress(registerRequest.getAddress());
+            user.setContactPerson(registerRequest.getContactPerson());
             user.setRole(Role.BUSINESS);
 
             userRepository.save(user);
 
             String token = jwtService.generateToken(user.getEmail());
-            return new AuthResponse(user.getBusinessName(), token);
-
+            return new AuthResponse(user.getId(), user.getBusinessName(), user.getContactPerson(), token);
         } catch (Exception e) {
             e.printStackTrace();  // Check the console for the real error
             throw new RuntimeException("Registration failed");
@@ -61,6 +62,6 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String token = jwtService.generateToken(user.getEmail());
-        return new AuthResponse(user.getBusinessName(), token);
+        return new AuthResponse(user.getId(), user.getBusinessName(), user.getContactPerson(), token);
     }
 }

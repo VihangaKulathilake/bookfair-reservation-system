@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    Box, Typography, Grid, Card, CardContent, Button, Container, Chip, useTheme, alpha
+    Box, Typography, Grid, Card, CardContent, Button, Container, useTheme, CircularProgress, alpha
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import NavBar from '../../components/layout/NavBar';
+import { motion } from 'framer-motion';
+import AdminNavbar from '../../components/layout/AdminNavbar';
 import SiteFooter from '../../components/layout/SiteFooter';
 import { logoutUser } from '../../api/authApi';
 import {
@@ -13,12 +14,34 @@ import {
     getVendors,
 } from '../../api/dashboardApi';
 
-import { People, EventNote, Payments, Category, RateReview } from '@mui/icons-material';
+import { People, EventNote, Payments, Category, RateReview, ArrowForward } from '@mui/icons-material';
+
+// Animation Variants
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1,
+            delayChildren: 0.2
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+        y: 0,
+        opacity: 1,
+        transition: { type: 'spring', stiffness: 100 }
+    }
+};
 
 const AdminDashboard = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const [stats, setStats] = useState({ users: 0, reservations: 0, payments: 0, genres: 0 });
+    const [loading, setLoading] = useState(true);
     const user = getStoredAuth();
 
     useEffect(() => {
@@ -26,21 +49,43 @@ const AdminDashboard = () => {
     }, []);
 
     const fetchStats = async () => {
+        setLoading(true);
         try {
-            const [vendors, reservations, payments] = await Promise.all([
+            const results = await Promise.allSettled([
                 getVendors(),
                 getAllReservations(),
                 getAllPayments()
             ]);
 
-            setStats({
-                users: Array.isArray(vendors) ? vendors.length : 0,
-                reservations: Array.isArray(reservations) ? reservations.filter(r => r.status === 'PENDING').length : 0,
-                payments: Array.isArray(payments) ? payments.filter(p => p.status === 'PENDING').length : 0,
-                genres: 0 // Placeholder
+            const vendorsData = results[0].status === 'fulfilled' ? results[0].value : [];
+            const reservationsData = results[1].status === 'fulfilled' ? results[1].value : [];
+            const paymentsData = results[2].status === 'fulfilled' ? results[2].value : [];
+
+            // Log errors if any failed
+            results.forEach((result, index) => {
+                if (result.status === 'rejected') {
+                    console.error(`Failed to fetch stats for index ${index}:`, result.reason);
+                }
             });
+
+            setStats({
+                users: Array.isArray(vendorsData) ? vendorsData.length : 0,
+                reservations: Array.isArray(reservationsData) ? reservationsData.filter(r => r.reservationStatus === 'PENDING').length : 0,
+                payments: Array.isArray(paymentsData) ? paymentsData.filter(p => p.paymentStatus === 'PENDING').length : 0,
+                genres: 0
+            });
+
+            // Fetch genres for count
+            if (Array.isArray(vendorsData) && vendorsData.length > 0) {
+                const genrePromises = vendorsData.map(v => getGenresByVendor(v.email).catch(() => []));
+                const genresResults = await Promise.all(genrePromises);
+                const totalGenres = genresResults.reduce((acc, curr) => acc + (Array.isArray(curr) ? curr.length : 0), 0);
+                setStats(prev => ({ ...prev, genres: totalGenres }));
+            }
         } catch (error) {
-            console.error("Failed to fetch stats");
+            console.error("Critical error in fetchStats:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -50,10 +95,10 @@ const AdminDashboard = () => {
     };
 
     const overviewItems = [
-        { title: 'TOTAL USERS', count: stats.users, icon: <People fontSize="large" />, color: '#EDE7F6', iconColor: '#5E35B1' },
-        { title: 'PENDING RESERVATIONS', count: stats.reservations, icon: <EventNote fontSize="large" />, color: '#FFF3E0', iconColor: '#EF6C00' },
-        { title: 'PENDING PAYMENTS', count: stats.payments, icon: <Payments fontSize="large" />, color: '#E8F5E9', iconColor: '#2E7D32' },
-        { title: 'GENRES', count: stats.genres, icon: <Category fontSize="large" />, color: '#E1F5FE', iconColor: '#0277BD' }
+        { title: 'TOTAL USERS', count: stats.users, icon: <People fontSize="large" />, color: '#EDE7F6', iconColor: '#5E35B1', delay: 0 },
+        { title: 'PENDING RESERVATIONS', count: stats.reservations, icon: <EventNote fontSize="large" />, color: '#FFF3E0', iconColor: '#EF6C00', delay: 0.1 },
+        { title: 'PENDING PAYMENTS', count: stats.payments, icon: <Payments fontSize="large" />, color: '#E8F5E9', iconColor: '#2E7D32', delay: 0.2 },
+        { title: 'GENRES', count: stats.genres, icon: <Category fontSize="large" />, color: '#E1F5FE', iconColor: '#0277BD', delay: 0.3 }
     ];
 
     const menuItems = [
@@ -65,127 +110,180 @@ const AdminDashboard = () => {
 
     return (
         <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#F5F7FA' }}>
-            <NavBar role="admin" userName={user?.businessName || 'Admin'} onLogout={handleLogout} />
+            <AdminNavbar userName={user?.contactPerson || user?.businessName || 'Admin'} onLogout={handleLogout} />
 
-            {/* Welcome Banner */}
-            <Box sx={{
-                mx: 3, mt: 4, mb: 4, p: 4,
-                borderRadius: 4,
-                background: 'linear-gradient(90deg, #4A148C 0%, #7B1FA2 100%)',
-                color: 'white',
-                position: 'relative',
-                overflow: 'hidden'
-            }}>
-                <Box sx={{ position: 'relative', zIndex: 1 }}>
-                    <Typography variant="h3" fontWeight="bold" gutterBottom>Admin Dashboard</Typography>
-                    <Typography variant="h6" sx={{ opacity: 0.9 }}>Welcome back, {user?.businessName || 'Admin'}</Typography>
+            {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+                    <CircularProgress size={60} thickness={4} />
                 </Box>
-                {/* Abstract Shapes */}
-                <Box sx={{
-                    position: 'absolute', right: -50, top: -50, width: 300, height: 300,
-                    borderRadius: '50%', background: 'rgba(255,255,255,0.1)'
-                }} />
-                <Box sx={{
-                    position: 'absolute', right: 150, bottom: -100, width: 200, height: 200,
-                    borderRadius: '50%', background: 'rgba(255,255,255,0.05)'
-                }} />
-            </Box>
+            ) : (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        {/* Modern Welcome Banner */}
+                        <Box sx={{
+                            mx: { xs: 2, md: 4 }, mt: 4, mb: 4, p: { xs: 3, md: 5 },
+                            borderRadius: 4,
+                            background: 'linear-gradient(135deg, #4A148C 0%, #7B1FA2 100%)',
+                            color: 'white',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            boxShadow: '0 8px 32px rgba(74, 20, 140, 0.2)'
+                        }}>
+                            <Box sx={{ position: 'relative', zIndex: 1, maxWidth: 'md' }}>
+                                <Typography variant="h3" fontWeight="800" gutterBottom sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' } }}>
+                                    Admin Dashboard
+                                </Typography>
+                                <Typography variant="h6" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                                    Welcome back, {user?.contactPerson || user?.businessName || 'Admin'}. Manage your book fair platform.
+                                </Typography>
+                            </Box>
 
-            <Container maxWidth="xl" sx={{ flexGrow: 1, mb: 4 }}>
-                {/* Overview Section */}
-                <Box mb={1} display="flex" alignItems="center" gap={1}>
-                    <Typography variant="h5" fontWeight="bold" color="text.primary">
-                        Overview
-                    </Typography>
-                </Box>
+                            {/* Decorative Elements */}
+                            <Box sx={{
+                                position: 'absolute', right: -50, top: -50, width: 300, height: 300,
+                                borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%)',
+                                filter: 'blur(40px)'
+                            }} />
+                            <Box sx={{
+                                position: 'absolute', right: 150, bottom: -100, width: 250, height: 250,
+                                borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)',
+                                filter: 'blur(30px)'
+                            }} />
+                        </Box>
+                    </motion.div>
 
-                <Grid container spacing={3} mb={6}>
-                    {overviewItems.map((item, index) => (
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-                            <Card sx={{
-                                bgcolor: item.color,
-                                borderRadius: 3,
-                                border: 'none',
-                                boxShadow: 'none',
-                                height: '100%'
-                            }}>
-                                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', p: 3 }}>
-                                    <Box sx={{
-                                        bgcolor: 'white',
-                                        p: 1.5,
-                                        borderRadius: 2,
-                                        color: item.iconColor,
-                                        mb: 2,
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-                                    }}>
-                                        {item.icon}
-                                    </Box>
-                                    <Typography variant="h3" fontWeight="800" color="text.primary" sx={{ mb: 0.5 }}>
-                                        {item.count}
-                                    </Typography>
-                                    <Typography variant="subtitle2" fontWeight="600" color="text.secondary" sx={{ letterSpacing: 1, opacity: 0.7 }}>
-                                        {item.title}
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    ))}
-                </Grid>
+                    <Container maxWidth="xl" sx={{ flexGrow: 1, mb: 6 }}>
+                        <motion.div
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                        >
+                            {/* Overview Section */}
+                            <Box mb={2} display="flex" alignItems="center" gap={1}>
+                                <Typography variant="h5" fontWeight="800" color="text.primary">
+                                    Overview
+                                </Typography>
+                            </Box>
 
-                {/* Quick Actions Section */}
-                <Typography variant="h5" fontWeight="bold" color="text.primary" gutterBottom>
-                    Quick Actions
-                </Typography>
-                <Grid container spacing={3}>
-                    {menuItems.map((item, index) => (
-                        <Grid size={{ xs: 12, md: 6, lg: 3 }} key={index}>
-                            <Card sx={{
-                                height: '100%',
-                                borderRadius: 3,
-                                transition: 'all 0.3s ease',
-                                '&:hover': { transform: 'translateY(-5px)', boxShadow: 6 }
-                            }}>
-                                <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 3 }}>
-                                    <Box display="flex" alignItems="center" mb={2}>
-                                        <Box sx={{
-                                            bgcolor: item.color,
-                                            p: 1,
-                                            borderRadius: 2,
-                                            color: item.iconColor,
-                                            mr: 2
-                                        }}>
-                                            {item.icon}
-                                        </Box>
-                                        <Typography variant="h6" fontWeight="bold">
-                                            {item.title}
-                                        </Typography>
-                                    </Box>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3, flexGrow: 1 }}>
-                                        {item.description}
-                                    </Typography>
-                                    <Button
-                                        variant="outlined"
-                                        fullWidth
-                                        onClick={() => navigate(item.path)}
-                                        sx={{
-                                            textTransform: 'none',
-                                            fontWeight: 600,
-                                            borderWidth: 2,
-                                            borderColor: item.iconColor,
-                                            color: item.iconColor,
-                                            '&:hover': { borderWidth: 2, borderColor: item.iconColor, bgcolor: item.color }
-                                        }}
-                                    >
-                                        {item.buttonText}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    ))}
-                </Grid>
-            </Container>
+                            <Grid container spacing={3} mb={6}>
+                                {overviewItems.map((item, index) => (
+                                    <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+                                        <motion.div variants={itemVariants} whileHover={{ y: -5, transition: { duration: 0.2 } }}>
+                                            <Card sx={{
+                                                bgcolor: 'background.paper',
+                                                borderRadius: 3,
+                                                border: '1px solid',
+                                                borderColor: 'divider',
+                                                boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
+                                                height: '100%',
+                                                overflow: 'visible',
+                                                position: 'relative'
+                                            }}>
+                                                <Box sx={{
+                                                    height: 4,
+                                                    width: '100%',
+                                                    bgcolor: item.iconColor,
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0,
+                                                    borderTopLeftRadius: 12,
+                                                    borderTopRightRadius: 12
+                                                }} />
+                                                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', p: 3 }}>
+                                                    <Box sx={{
+                                                        bgcolor: item.color,
+                                                        p: 1.5,
+                                                        borderRadius: 2,
+                                                        color: item.iconColor,
+                                                        mb: 2,
+                                                    }}>
+                                                        {item.icon}
+                                                    </Box>
+                                                    <Typography variant="h3" fontWeight="800" color="text.primary" sx={{ mb: 0.5 }}>
+                                                        {item.count}
+                                                    </Typography>
+                                                    <Typography variant="subtitle2" fontWeight="700" color="text.secondary" sx={{ letterSpacing: 0.5, textTransform: 'uppercase', fontSize: '0.75rem' }}>
+                                                        {item.title}
+                                                    </Typography>
+                                                </CardContent>
+                                            </Card>
+                                        </motion.div>
+                                    </Grid>
+                                ))}
+                            </Grid>
 
-            <SiteFooter />
+                            {/* Quick Actions Section */}
+                            <Box mb={2} display="flex" alignItems="center" gap={1}>
+                                <Typography variant="h5" fontWeight="800" color="text.primary">
+                                    Quick Actions
+                                </Typography>
+                            </Box>
+
+                            <Grid container spacing={3}>
+                                {menuItems.map((item, index) => (
+                                    <Grid size={{ xs: 12, md: 6, lg: 3 }} key={index}>
+                                        <motion.div variants={itemVariants} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                            <Card sx={{
+                                                height: '100%',
+                                                borderRadius: 4,
+                                                border: '1px solid',
+                                                borderColor: 'divider',
+                                                boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+                                                cursor: 'pointer',
+                                                background: `linear-gradient(to bottom right, #ffffff, ${item.color})`
+                                            }} onClick={() => navigate(item.path)}>
+                                                <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 4 }}>
+                                                    <Box display="flex" alignItems="center" mb={2}>
+                                                        <Box sx={{
+                                                            bgcolor: 'white',
+                                                            p: 1.5,
+                                                            borderRadius: 3,
+                                                            color: item.iconColor,
+                                                            mr: 2,
+                                                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                                                        }}>
+                                                            {item.icon}
+                                                        </Box>
+                                                        <Typography variant="h6" fontWeight="800">
+                                                            {item.title}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 4, flexGrow: 1, fontWeight: 500 }}>
+                                                        {item.description}
+                                                    </Typography>
+                                                    <Button
+                                                        endIcon={<ArrowForward />}
+                                                        sx={{
+                                                            justifyContent: 'space-between',
+                                                            textTransform: 'none',
+                                                            fontWeight: 700,
+                                                            color: item.iconColor,
+                                                            bgcolor: 'white',
+                                                            px: 2,
+                                                            py: 1,
+                                                            borderRadius: 2,
+                                                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                                            '&:hover': { bgcolor: 'white', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }
+                                                        }}
+                                                    >
+                                                        {item.buttonText}
+                                                    </Button>
+                                                </CardContent>
+                                            </Card>
+                                        </motion.div>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        </motion.div>
+                    </Container>
+
+                    <SiteFooter />
+                </>
+            )}
         </Box>
     );
 };
