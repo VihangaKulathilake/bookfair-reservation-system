@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
-    Mail, Phone, Save, X, ArrowLeft, Camera, Shield
+    Mail, Phone, Save, X, ArrowLeft, Shield
 } from 'lucide-react';
 import AdminNavbar from '../../components/layout/AdminNavbar';
 import SiteFooter from '../../components/layout/SiteFooter';
@@ -113,19 +113,6 @@ const EditAdminProfile = () => {
                             >
                                 {formData.email?.charAt(0).toUpperCase()}
                             </Avatar>
-                            <IconButton
-                                sx={{
-                                    position: 'absolute',
-                                    bottom: 0,
-                                    right: 0,
-                                    bgcolor: 'white',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                    '&:hover': { bgcolor: '#f5f5f5' }
-                                }}
-                                size="small"
-                            >
-                                <Camera size={16} />
-                            </IconButton>
                         </Box>
                         <Box>
                             <Typography variant="h4" fontWeight={800} color="text.primary">Edit Admin Profile</Typography>

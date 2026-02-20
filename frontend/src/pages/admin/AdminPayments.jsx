@@ -22,6 +22,7 @@ const AdminPayments = () => {
     const [selectedPayment, setSelectedPayment] = useState(null);
     const [editData, setEditData] = useState({ amount: '', paymentStatus: '', paymentMethod: '', transactionId: '' });
     const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'warning' });
+    const [confirmAction, setConfirmAction] = useState({ open: false, type: '', id: null, title: '', content: '' });
     const user = getStoredAuth();
 
     const handleLogout = () => {
@@ -45,37 +46,69 @@ const AdminPayments = () => {
         }
     };
 
-    const handleConfirm = async (id) => {
-        if (window.confirm("Confirm this cash payment?")) {
-            try {
-                await confirmCashPayment(id);
-                fetchPayments();
-                setAlert({ open: false });
-            } catch (error) {
-                setAlert({
-                    open: true,
-                    title: 'Verification Failed',
-                    message: error.response?.data?.message || "Failed to verify the cash payment. Please check system logs.",
-                    severity: 'error'
-                });
-            }
+    const handleConfirm = (id) => {
+        setConfirmAction({
+            open: true,
+            type: 'CONFIRM_CASH',
+            id,
+            title: 'Confirm Cash Payment',
+            content: 'Are you sure you want to verify this cash payment?'
+        });
+    };
+
+    const handleConfirmCash = async () => {
+        const id = confirmAction.id;
+        try {
+            await confirmCashPayment(id);
+            fetchPayments();
+            setAlert({
+                open: true,
+                title: 'Payment Verified',
+                message: 'The cash payment has been successfully confirmed.',
+                severity: 'success'
+            });
+        } catch (error) {
+            setAlert({
+                open: true,
+                title: 'Verification Failed',
+                message: error.response?.data?.message || "Failed to verify the cash payment.",
+                severity: 'error'
+            });
+        } finally {
+            setConfirmAction({ open: false, type: '', id: null, title: '', content: '' });
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this payment record?")) {
-            try {
-                await deletePayment(id);
-                fetchPayments();
-                setAlert({ open: false });
-            } catch (error) {
-                setAlert({
-                    open: true,
-                    title: "Can't Delete Payment",
-                    message: error.response?.data?.message || "Can't delete pending payments.",
-                    severity: 'warning'
-                });
-            }
+    const handleDelete = (id) => {
+        setConfirmAction({
+            open: true,
+            type: 'DELETE_PAYMENT',
+            id,
+            title: 'Delete Payment Record',
+            content: 'Are you sure you want to delete this payment record? This action cannot be undone.'
+        });
+    };
+
+    const handleDeleteConfirm = async () => {
+        const id = confirmAction.id;
+        try {
+            await deletePayment(id);
+            fetchPayments();
+            setAlert({
+                open: true,
+                title: 'Payment Deleted',
+                message: 'The payment record has been successfully removed.',
+                severity: 'success'
+            });
+        } catch (error) {
+            setAlert({
+                open: true,
+                title: "Can't Delete Payment",
+                message: error.response?.data?.message || "Can't delete pending payments.",
+                severity: 'warning'
+            });
+        } finally {
+            setConfirmAction({ open: false, type: '', id: null, title: '', content: '' });
         }
     };
 
@@ -370,6 +403,29 @@ const AdminPayments = () => {
                                 disableElevation
                             >
                                 Save Changes
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+
+                    {/* Generic Confirmation Dialog for AdminActions */}
+                    <Dialog
+                        open={confirmAction.open}
+                        onClose={() => setConfirmAction({ ...confirmAction, open: false })}
+                        PaperProps={{ sx: { borderRadius: 4, p: 1 } }}
+                    >
+                        <DialogTitle sx={{ fontWeight: 800 }}>{confirmAction.title}</DialogTitle>
+                        <DialogContent>
+                            <Typography variant="body1">{confirmAction.content}</Typography>
+                        </DialogContent>
+                        <DialogActions sx={{ px: 3, pb: 2 }}>
+                            <Button onClick={() => setConfirmAction({ ...confirmAction, open: false })} color="inherit" sx={{ fontWeight: 700 }}>Cancel</Button>
+                            <Button
+                                onClick={confirmAction.type === 'CONFIRM_CASH' ? handleConfirmCash : handleDeleteConfirm}
+                                variant="contained"
+                                color={confirmAction.type === 'CONFIRM_CASH' ? 'success' : 'error'}
+                                sx={{ borderRadius: 2, fontWeight: 700, px: 3 }}
+                            >
+                                {confirmAction.type === 'CONFIRM_CASH' ? 'Confirm' : 'Delete'}
                             </Button>
                         </DialogActions>
                     </Dialog>

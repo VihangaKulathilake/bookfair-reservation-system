@@ -16,11 +16,13 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ReservationStatusChip from './ReservationStatusChip';
 import ReservationActionDialog from './ReservationActionDialog';
+import ModernAlert from '../common/ModernAlert';
 
 const ReservationTable = ({ reservations, setReservations }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [actionType, setActionType] = useState(''); // 'APPROVE', 'REJECT', 'DELETE'
+  const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'error' });
 
   const handleOpenDialog = (reservation, type) => {
     setSelectedReservation(reservation);
@@ -68,7 +70,12 @@ const ReservationTable = ({ reservations, setReservations }) => {
       }
     } catch (error) {
       console.error("Failed to update reservation:", error);
-      alert("Failed to perform action: " + error.message);
+      setAlert({
+        open: true,
+        title: 'Action Failed',
+        message: 'Failed to perform action: ' + (error.response?.data?.message || error.message),
+        severity: 'error'
+      });
     } finally {
       handleCloseDialog();
     }
@@ -193,6 +200,14 @@ const ReservationTable = ({ reservations, setReservations }) => {
         onConfirm={handleConfirmAction}
         confirmText={confirmText}
         confirmColor={confirmColor}
+      />
+
+      <ModernAlert
+        open={alert.open}
+        title={alert.title}
+        message={alert.message}
+        severity={alert.severity}
+        onClose={() => setAlert({ ...alert, open: false })}
       />
     </>
   );
