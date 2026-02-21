@@ -17,9 +17,10 @@ export const loginUser = async (email, password) => {
             const roleData = await resolveRoleByEmail(email);
             const userData = {
                 businessName: response.data.businessName ?? '',
+                contactPerson: response.data.contactPerson ?? '',
                 email,
                 role: roleData.role,
-                userId: roleData.userId,
+                userId: response.data.userId || roleData.userId,
             };
             localStorage.setItem('user', JSON.stringify(userData));
         }
@@ -53,16 +54,33 @@ export const registerUser = async (userData) => {
 };
 
 /**
- * Request password reset link
+ * Verify if email exists
  * @param {string} email 
+ * @returns {Promise<boolean>}
+ */
+export const verifyEmail = async (email) => {
+    try {
+        console.log("Calling verifyEmail for:", email);
+        const response = await client.post('/auth/verify-email', { email });
+        return response.data;
+    } catch (error) {
+        const message = error.response?.data?.message || 'Verification failed.';
+        throw new Error(message);
+    }
+};
+
+/**
+ * Reset password
+ * @param {string} email 
+ * @param {string} newPassword 
  * @returns {Promise<Object>} Response data
  */
-export const resetPassword = async (email) => {
+export const resetPasswordNew = async (email, newPassword) => {
     try {
-        const response = await client.post('/auth/forgot-password', { email });
+        const response = await client.post('/auth/reset-password', { email, newPassword });
         return { success: true, data: response.data };
     } catch (error) {
-        const message = error.response?.data?.message || 'Failed to send reset link. Please try again.';
+        const message = error.response?.data?.message || 'Reset failed.';
         throw new Error(message);
     }
 };

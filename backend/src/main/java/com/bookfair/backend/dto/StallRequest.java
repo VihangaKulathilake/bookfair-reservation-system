@@ -16,4 +16,5 @@ public class StallRequest {
     private String stallCode;
     private StallSize stallSize;
     private double price;
+    private com.bookfair.backend.enums.StallStatus stallStatus;
 }

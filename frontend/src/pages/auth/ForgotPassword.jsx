@@ -6,51 +6,76 @@ import AuthLayout from '../../components/layout/AuthLayout';
 import ForgotPasswordForm from '../../components/auth/ForgotPasswordForm';
 
 // Utils & API
-import { validateEmail } from '../../utils/validation';
-import { resetPassword } from '../../api/authApi';
+import { validateEmail, validatePassword, validatePasswordMatch } from '../../utils/validation';
+import { verifyEmail, resetPasswordNew } from '../../api/authApi';
 
 // Assets
 const forgotPasswordImage = '/assets/login_pic.jpg'; // Using same image for now
 
 const ForgotPassword = () => {
+    const [step, setStep] = useState(1); // 1: Email, 2: New Password, 3: Success
     const [email, setEmail] = useState('');
+    const [passwords, setPasswords] = useState({ password: '', confirmPassword: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [submitted, setSubmitted] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     const handleChange = (e) => {
-        setEmail(e.target.value);
+        const { name, value } = e.target;
+        if (name === 'email') {
+            setEmail(value);
+        } else {
+            setPasswords({ ...passwords, [name]: value });
+        }
         if (error) setError('');
     };
 
-    const handleSubmit = async (e) => {
+    const handleEmailSubmit = async (e) => {
         e.preventDefault();
-        
         const emailError = validateEmail(email);
         if (emailError) {
             setError(emailError);
-            setSnackbar({ open: true, message: 'Please enter a valid email.', severity: 'warning' });
             return;
         }
 
         setLoading(true);
         try {
-            const response = await resetPassword(email);
-            if (response.success) {
-                setSubmitted(true);
-                setSnackbar({ 
-                    open: true, 
-                    message: 'Password reset link sent!', 
-                    severity: 'success' 
-                });
+            const exists = await verifyEmail(email);
+            if (exists) {
+                setStep(2);
+                setSnackbar({ open: true, message: 'Email verified. Please set your new password.', severity: 'success' });
+            } else {
+                setError('No account found with this email.');
             }
-        } catch (error) {
-            setSnackbar({ 
-                open: true, 
-                message: error.message || 'Failed to send reset link.', 
-                severity: 'error' 
-            });
+        } catch (err) {
+            setSnackbar({ open: true, message: err.message, severity: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResetSubmit = async (e) => {
+        e.preventDefault();
+
+        const passwordError = validatePassword(passwords.password);
+        if (passwordError) {
+            setError(passwordError);
+            return;
+        }
+
+        const matchError = validatePasswordMatch(passwords.password, passwords.confirmPassword);
+        if (matchError) {
+            setError(matchError);
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await resetPasswordNew(email, passwords.password);
+            setStep(3);
+            setSnackbar({ open: true, message: 'Password reset successfully!', severity: 'success' });
+        } catch (err) {
+            setSnackbar({ open: true, message: err.message, severity: 'error' });
         } finally {
             setLoading(false);
         }
@@ -59,23 +84,24 @@ const ForgotPassword = () => {
     const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
     return (
-        <AuthLayout 
+        <AuthLayout
             image={forgotPasswordImage}
             title="Recovery"
-            subtitle="Get back into your account."
+            subtitle={step === 1 ? "Verify your email to continue." : "Set your new account password."}
         >
             <ForgotPasswordForm
+                step={step}
                 email={email}
+                passwords={passwords}
                 handleChange={handleChange}
-                handleSubmit={handleSubmit}
+                handleSubmit={step === 1 ? handleEmailSubmit : handleResetSubmit}
                 error={error}
                 loading={loading}
-                submitted={submitted}
             />
 
-            <Snackbar 
-                open={snackbar.open} 
-                autoHideDuration={6000} 
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
                 onClose={handleCloseSnackbar}
                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             >

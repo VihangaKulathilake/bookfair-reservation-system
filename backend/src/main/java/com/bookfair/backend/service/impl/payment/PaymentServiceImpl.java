@@ -127,13 +127,53 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public List<PaymentResponse> getPaymentsByUserId(Long userId) {
+        System.out.println("DEBUG: Fetching payments for userId: " + userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException(CommonMessages.USER_NOT_FOUND));
 
-        return paymentRepository.findByReservationUserId(user.getId())
-                .stream()
+        List<Payment> payments = paymentRepository.findByReservationUserId(user.getId());
+        System.out.println("DEBUG: Found " + payments.size() + " payments for user " + user.getId());
+        
+        return payments.stream()
                 .map(this::mapToPaymentResponse)
                 .toList();
+    }
+
+    @Override
+    public PaymentResponse updatePayment(Long id, PaymentRequest paymentRequest) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CommonMessages.PAYMENT_NOT_FOUND));
+
+        if (paymentRequest.getAmount() != null) {
+            payment.setAmount(paymentRequest.getAmount());
+        }
+        if (paymentRequest.getPaymentStatus() != null) {
+            payment.setPaymentStatus(paymentRequest.getPaymentStatus());
+        }
+        if (paymentRequest.getPaymentMethod() != null) {
+            payment.setPaymentMethod(paymentRequest.getPaymentMethod());
+        }
+        if (paymentRequest.getTransactionId() != null) {
+            payment.setTransactionId(paymentRequest.getTransactionId());
+        }
+
+        return mapToPaymentResponse(paymentRepository.save(payment));
+    }
+
+    @Override
+    public void deletePayment(Long id) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CommonMessages.PAYMENT_NOT_FOUND));
+
+        // [GUARDRAIL] Audit Shield: Block deletion of successful or pending payments
+        if (payment.getPaymentStatus() == com.bookfair.backend.enums.PaymentStatus.SUCCESS) {
+            throw new RuntimeException("Can't delete successful payments.");
+        }
+        if (payment.getPaymentStatus() == com.bookfair.backend.enums.PaymentStatus.PENDING) {
+            throw new RuntimeException("Can't delete pending payments.");
+        }
+
+        paymentRepository.delete(payment);
     }
 
     // Helper methods
@@ -144,6 +184,26 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new RuntimeException(CommonMessages.PAYMENT_PROVIDER_NOT_FOUND));
     }
     private PaymentResponse mapToPaymentResponse(Payment payment) {
+        Reservation reservation = payment.getReservation();
+        String businessName = "Unknown";
+        String email = "";
+        Long userId = null;
+        Long reservationId = null;
+        List<String> stallCodes = java.util.Collections.emptyList();
+
+        if (reservation != null) {
+            reservationId = reservation.getId();
+            User user = reservation.getUser();
+            if (user != null) {
+                userId = user.getId();
+                businessName = user.getBusinessName();
+                email = user.getEmail();
+            }
+            if (reservation.getStalls() != null) {
+                stallCodes = reservation.getStalls().stream().map(com.bookfair.backend.model.Stall::getStallCode).toList();
+            }
+        }
+
         return PaymentResponse.builder()
                 .paymentId(payment.getId())
                 .amount(payment.getAmount())
@@ -151,6 +211,11 @@ public class PaymentServiceImpl implements PaymentService {
                 .paymentMethod(payment.getPaymentMethod())
                 .paymentStatus(payment.getPaymentStatus())
                 .paymentDate(payment.getPaymentDate())
+                .reservationId(reservationId)
+                .userId(userId)
+                .businessName(businessName)
+                .email(email)
+                .stallCodes(stallCodes)
                 .build();
     }
 

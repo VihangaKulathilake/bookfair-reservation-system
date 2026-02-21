@@ -28,6 +28,11 @@ export const resolveRoleByEmail = async (email) => {
     };
 };
 
+export const getVendorById = async (id) => {
+    const response = await client.get(`/admin/vendors/${id}`);
+    return response.data;
+};
+
 export const getVendors = async () => {
     const response = await client.get('/admin/vendors');
     return response.data ?? [];
@@ -40,6 +45,21 @@ export const updateVendor = async (id, payload) => {
 
 export const deleteVendor = async (id) => {
     await client.delete(`/admin/vendors/${id}`);
+};
+
+export const getUserById = async (id) => {
+    const response = await client.get(`/users/${id}`);
+    return response.data;
+};
+
+export const getUserByEmail = async (email) => {
+    const response = await client.get(`/users/by-email`, { params: { email } });
+    return response.data;
+};
+
+export const updateUser = async (id, payload) => {
+    const response = await client.put(`/users/${id}`, payload);
+    return response.data;
 };
 
 export const getAllReservations = async () => {
@@ -69,13 +89,27 @@ export const getAllPayments = async () => {
 };
 
 export const getPaymentsByUserId = async (userId) => {
-    const response = await client.get(`/payments/${userId}`);
+    const response = await client.get(`/payments/user/${userId}`);
     return response.data ?? [];
 };
 
 export const confirmCashPayment = async (paymentId) => {
     const response = await client.put(`/payments/${paymentId}/confirm`);
     return response.data;
+};
+
+export const updateReservation = async (id, payload) => {
+    const response = await client.put(`/reservations/${id}`, payload);
+    return response.data;
+};
+
+export const updatePayment = async (id, payload) => {
+    const response = await client.put(`/payments/${id}`, payload);
+    return response.data;
+};
+
+export const deletePayment = async (id) => {
+    await client.delete(`/payments/${id}`);
 };
 
 export const getGenresByVendor = async (vendorEmail) => {
@@ -112,6 +146,20 @@ export const cancelReservation = async (id) => {
 export const getAvailableStalls = async () => {
     const response = await client.get('/stalls/available');
     return response.data ?? [];
+};
+
+export const getAllStalls = async () => {
+    const response = await client.get('/stalls/all');
+    return response.data ?? [];
+};
+
+export const deleteStall = async (id) => {
+    await client.delete(`/stalls/${id}`);
+};
+
+export const updateStall = async (id, data) => {
+    const response = await client.put(`/stalls/update/${id}`, data);
+    return response.data;
 };
 
 export const getStoredAuth = () => {

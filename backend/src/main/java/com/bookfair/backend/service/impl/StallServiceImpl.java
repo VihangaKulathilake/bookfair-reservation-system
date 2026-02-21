@@ -75,20 +75,40 @@ public class StallServiceImpl implements StallService {
         stall.setStallCode(stallRequest.getStallCode());
         stall.setStallSize(stallRequest.getStallSize());
         stall.setPrice(stallRequest.getPrice());
+        
+        // [ENTERPRISE GOVERNANCE] State Transition Guardrails
+        if (stallRequest.getStallStatus() != null && stallRequest.getStallStatus() != stall.getStallStatus()) {
+            
+            // 1. Check for Active/Pending Reservations
+            boolean hasActiveReservation = stall.getReservation() != null && 
+                (stall.getReservation().getReservationStatus() == com.bookfair.backend.enums.ReservationStatus.CONFIRMED || 
+                 stall.getReservation().getReservationStatus() == com.bookfair.backend.enums.ReservationStatus.PENDING);
 
-        // If status is updated via request, it should be handled.
-        // Assuming StallRequest might need a status field or we use default logic.
-        // For now, only updating fields present in StallRequest.
+            if (hasActiveReservation) {
+                // Determine if the transition is allowed
+                // Basically, if there's an active reservation, you can't manually set it to AVAILABLE, MAINTENANCE, or BLOCKED
+                // It must be released via the reservation flow.
+                throw new RuntimeException("Can't change status. Stall has an active or pending reservation.");
+            }
+
+            stall.setStallStatus(stallRequest.getStallStatus());
+        }
 
         return mapToResponse(stallRepository.save(stall));
     }
 
     @Override
     public void deleteStall(Long id) {
-        if (!stallRepository.existsById(id)) {
-            throw new RuntimeException(CommonMessages.STALL_NOT_FOUND);
+        Stall stall = stallRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CommonMessages.STALL_NOT_FOUND));
+
+        // [GUARDRAIL] Stall Shield: Block deletion if part of an active confirmed reservation
+        if (stall.getReservation() != null && 
+            stall.getReservation().getReservationStatus() == com.bookfair.backend.enums.ReservationStatus.CONFIRMED) {
+            throw new RuntimeException(CommonMessages.STALL_IN_ACTIVE_RESERVATION);
         }
-        stallRepository.deleteById(id);
+
+        stallRepository.delete(stall);
     }
 
     private StallResponse mapToResponse(Stall stall) {

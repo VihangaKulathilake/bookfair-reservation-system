@@ -16,4 +16,9 @@ public class PaymentResponse {
     private PaymentMethod paymentMethod;
     private PaymentStatus paymentStatus;
     private LocalDateTime paymentDate;
+    private Long reservationId;
+    private Long userId;
+    private String businessName;
+    private String email;
+    private java.util.List<String> stallCodes;
 }

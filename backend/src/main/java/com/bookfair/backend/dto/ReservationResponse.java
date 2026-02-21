@@ -19,4 +19,7 @@ public class ReservationResponse {
     private Double totalAmount;
     private LocalDateTime reservationDate;
     private ReservationStatus reservationStatus;
+    private String businessName;
+    private String contactNumber;
+    private String email;
 }

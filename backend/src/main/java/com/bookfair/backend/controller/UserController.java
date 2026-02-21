@@ -15,7 +15,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping(ApiEndpoints.GET_USER_BY_ID)
+     @GetMapping(ApiEndpoints.GET_USER_BY_ID)
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }

@@ -12,5 +12,11 @@ public interface UserService {
 
     User updateVendor(Long id, User userDetails);
 
+    User getUserById(Long id);
+
+    User updateUser(Long id, User userDetails);
+
     void deleteVendor(Long id);
+
+    User getUserByEmail(String email);
 }

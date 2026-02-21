@@ -1,15 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import {
     Grid, Card, CardContent, Typography, Button, Box, Dialog, DialogTitle,
-    DialogContent, DialogActions, TextField, Chip, Alert
+    DialogContent, DialogActions, TextField, Chip, Alert, Container, useTheme
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import UserNavbar from '../../components/layout/UserNavbar';
+import SiteFooter from '../../components/layout/SiteFooter';
+import { logoutUser } from '../../api/authApi';
 import { getAvailableStalls, createReservation, getStoredAuth } from '../../api/dashboardApi';
+import ModernAlert from '../../components/common/ModernAlert';
 
 const VendorStalls = () => {
+    const theme = useTheme();
+    const navigate = useNavigate();
     const [stalls, setStalls] = useState([]);
     const [selectedStalls, setSelectedStalls] = useState([]);
     const [open, setOpen] = useState(false);
     const [user] = useState(getStoredAuth());
+    const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'error' });
+
+    const handleLogout = () => {
+        logoutUser();
+        navigate('/login');
+    };
 
     useEffect(() => {
         fetchStalls();
@@ -29,7 +42,12 @@ const VendorStalls = () => {
             setSelectedStalls(selectedStalls.filter(id => id !== stall.id));
         } else {
             if (selectedStalls.length >= 3) {
-                alert("You can select up to 3 stalls only.");
+                setAlert({
+                    open: true,
+                    title: 'Selection Limit',
+                    message: "You can select up to 3 stalls only.",
+                    severity: 'warning'
+                });
                 return;
             }
             setSelectedStalls([...selectedStalls, stall.id]);
@@ -38,7 +56,12 @@ const VendorStalls = () => {
 
     const handleReserve = async () => {
         if (!user) {
-            alert("Please login first");
+            setAlert({
+                open: true,
+                title: 'Authentication Required',
+                message: "Please login first",
+                severity: 'error'
+            });
             return;
         }
 
@@ -47,62 +70,87 @@ const VendorStalls = () => {
                 userId: user.userId,
                 stallIds: selectedStalls
             });
-            alert("Reservation created successfully!");
+            setAlert({
+                open: true,
+                title: 'Success',
+                message: "Reservation created successfully!",
+                severity: 'success'
+            });
             setOpen(false);
             setSelectedStalls([]);
             fetchStalls();
         } catch (error) {
-            alert("Failed to create reservation: " + (error.response?.data?.message || error.message));
+            setAlert({
+                open: true,
+                title: 'Reservation Failed',
+                message: (error.response?.data?.message || error.message),
+                severity: 'error'
+            });
         }
     };
 
     return (
-        <Box p={3}>
-            <Typography variant="h4" gutterBottom>Browse Available Stalls</Typography>
-            <Box mb={2}>
-                <Button
-                    variant="contained"
-                    disabled={selectedStalls.length === 0}
-                    onClick={() => setOpen(true)}
-                >
-                    Reserve Selected ({selectedStalls.length})
-                </Button>
-            </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: theme.palette.background.default }}>
+            <UserNavbar userName={user?.businessName || 'Vendor'} onLogout={handleLogout} />
 
-            <Grid container spacing={2}>
-                {stalls.map((stall) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }} key={stall.id}>
-                        <Card
-                            sx={{
-                                border: selectedStalls.includes(stall.id) ? '2px solid blue' : '1px solid grey',
-                                cursor: 'pointer',
-                                height: '100%'
-                            }}
-                            onClick={() => handleSelect(stall)}
+            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+                <Container maxWidth="xl">
+                    <Typography variant="h4" gutterBottom>Browse Available Stalls</Typography>
+                    <Box mb={2}>
+                        <Button
+                            variant="contained"
+                            disabled={selectedStalls.length === 0}
+                            onClick={() => setOpen(true)}
                         >
-                            <CardContent>
-                                <Typography variant="h6">{stall.stallName}</Typography>
-                                <Typography>Size: {stall.stallSize}</Typography>
-                                <Typography>Price: {stall.price}</Typography>
-                                <Typography>Location: {stall.location}</Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                ))}
-            </Grid>
+                            Reserve Selected ({selectedStalls.length})
+                        </Button>
+                    </Box>
 
-            <Dialog open={open} onClose={() => setOpen(false)}>
-                <DialogTitle>Confirm Reservation</DialogTitle>
-                <DialogContent>
-                    <Typography>
-                        You are about to reserve {selectedStalls.length} stall(s).
-                    </Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleReserve}>Confirm</Button>
-                </DialogActions>
-            </Dialog>
+                    <Grid container spacing={2}>
+                        {stalls.map((stall) => (
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={stall.id}>
+                                <Card
+                                    sx={{
+                                        border: selectedStalls.includes(stall.id) ? '2px solid blue' : '1px solid grey',
+                                        cursor: 'pointer',
+                                        height: '100%'
+                                    }}
+                                    onClick={() => handleSelect(stall)}
+                                >
+                                    <CardContent>
+                                        <Typography variant="h6">{stall.stallName}</Typography>
+                                        <Typography>Size: {stall.stallSize}</Typography>
+                                        <Typography>Price: {stall.price}</Typography>
+                                        <Typography>Location: {stall.location}</Typography>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        ))}
+                    </Grid>
+
+                    <Dialog open={open} onClose={() => setOpen(false)}>
+                        <DialogTitle>Confirm Reservation</DialogTitle>
+                        <DialogContent>
+                            <Typography>
+                                You are about to reserve {selectedStalls.length} stall(s).
+                            </Typography>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => setOpen(false)}>Cancel</Button>
+                            <Button variant="contained" onClick={handleReserve}>Confirm</Button>
+                        </DialogActions>
+                    </Dialog>
+
+                    <ModernAlert
+                        open={alert.open}
+                        title={alert.title}
+                        message={alert.message}
+                        severity={alert.severity}
+                        onClose={() => setAlert({ ...alert, open: false })}
+                    />
+                </Container>
+            </Box>
+            <SiteFooter />
         </Box>
     );
 };

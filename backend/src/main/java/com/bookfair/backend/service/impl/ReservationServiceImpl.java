@@ -98,6 +98,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    @Transactional
     public List<ReservationResponse> getReservationByUserId(Long userId) {
         return reservationRepository.findByUserId(userId)
                 .stream()
@@ -117,6 +118,10 @@ public class ReservationServiceImpl implements ReservationService {
     public ReservationResponse cancelReservation(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.RESERVATION_NOT_FOUND));
+
+        if (reservation.getReservationStatus() != ReservationStatus.PENDING) {
+            throw new ValidationException("Only pending reservations can be cancelled.");
+        }
 
         reservation.setReservationStatus(ReservationStatus.CANCELLED);
 
@@ -149,9 +154,37 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    @Transactional
+    public ReservationResponse updateReservation(Long id, ReservationRequest reservationRequest) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.RESERVATION_NOT_FOUND));
+
+        if (reservationRequest.getTotalAmount() != null) {
+            reservation.setTotalAmount(reservationRequest.getTotalAmount());
+        }
+
+        if (reservationRequest.getReservationStatus() != null) {
+            reservation.setReservationStatus(reservationRequest.getReservationStatus());
+
+            if (reservationRequest.getReservationStatus() == ReservationStatus.CANCELLED) {
+                // Return result of cancelReservation for full cleanup
+                return cancelReservation(id);
+            }
+        }
+
+        return mapToResponse(reservationRepository.save(reservation));
+    }
+
+    @Override
     public void deleteReservation(Long id) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(CommonMessages.RESERVATION_NOT_FOUND));
+
+        // [GUARDRAIL] Stall Shield: Block deletion of active or confirmed reservations
+        if (reservation.getReservationStatus() == ReservationStatus.PENDING || 
+            reservation.getReservationStatus() == ReservationStatus.CONFIRMED) {
+            throw new ValidationException(CommonMessages.STALL_IN_ACTIVE_RESERVATION);
+        }
 
         for (Stall stall : reservation.getStalls()) {
             stall.setReservation(null);
@@ -180,19 +213,35 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     private ReservationResponse mapToResponse(Reservation reservation) {
+        String businessName = "Unknown";
+        String email = "";
+        String contactNumber = "";
+        Long userId = null;
+        List<String> stallCodes = java.util.Collections.emptyList();
 
-        List<String> stallCodes = (reservation.getStalls() != null) ? reservation.getStalls()
-                .stream()
-                .map(Stall::getStallCode)
-                .toList() : java.util.Collections.emptyList();
+        if (reservation.getUser() != null) {
+            userId = reservation.getUser().getId();
+            businessName = reservation.getUser().getBusinessName();
+            email = reservation.getUser().getEmail();
+            contactNumber = reservation.getUser().getContactNumber();
+        }
+
+        if (reservation.getStalls() != null) {
+            stallCodes = reservation.getStalls().stream()
+                    .map(Stall::getStallCode)
+                    .collect(Collectors.toList());
+        }
 
         return ReservationResponse.builder()
                 .reservationId(reservation.getId())
-                .userId(reservation.getUser().getId())
+                .userId(userId)
                 .stallCodes(stallCodes)
                 .totalAmount(reservation.getTotalAmount())
                 .reservationDate(reservation.getReservationDate())
                 .reservationStatus(reservation.getReservationStatus())
+                .businessName(businessName)
+                .contactNumber(contactNumber)
+                .email(email)
                 .build();
     }
 }

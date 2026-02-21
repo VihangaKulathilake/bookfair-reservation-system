@@ -33,6 +33,9 @@ public class Reservation {
     @Enumerated(EnumType.STRING)
     private ReservationStatus reservationStatus;
 
+    @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Payment payment;
+
     @PrePersist
     public void prePersist() {
         if (reservationStatus == null) {

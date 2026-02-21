@@ -22,7 +22,7 @@ public class ReservationController {
     }
 
     @PutMapping(ApiEndpoints.CANCEL_RESERVATION)
-    public ReservationResponse cancelReservation(@PathVariable Long reservationId) {
+    public ReservationResponse cancelReservation(@PathVariable("id") Long reservationId) {
         return reservationService.cancelReservation(reservationId);
     }
 
@@ -32,12 +32,12 @@ public class ReservationController {
     }
 
     @GetMapping(ApiEndpoints.GET_RESERVATION_BY_ID)
-    public ReservationResponse getReservationById(@PathVariable Long reservationId) {
+    public ReservationResponse getReservationById(@PathVariable("id") Long reservationId) {
         return reservationService.getReservationById(reservationId);
     }
 
     @GetMapping(ApiEndpoints.GET_RESERVATION_BY_USER_ID)
-    public List<ReservationResponse> getReservationByUserId(@PathVariable Long userId) {
+    public List<ReservationResponse> getReservationByUserId(@PathVariable("id") Long userId) {
         return reservationService.getReservationByUserId(userId);
     }
 
@@ -51,7 +51,9 @@ public class ReservationController {
         reservationService.deleteReservation(id);
     }
 
+
     @PutMapping(ApiEndpoints.UPDATE_RESERVATION)
+
     public ReservationResponse updateReservation(@PathVariable Long id, @RequestBody ReservationRequest reservationRequest) {
         return reservationService.updateReservation(id, reservationRequest);
     }

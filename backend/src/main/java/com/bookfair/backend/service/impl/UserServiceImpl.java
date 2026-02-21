@@ -22,6 +22,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ReservationService reservationService; // To cancel reservations
     private final ReservationRepository reservationRepository; // To find reservations
+    private final com.bookfair.backend.repository.GenreRepository genreRepository;
 
     @Override
     public List<User> getAllVendors() {
@@ -40,12 +41,27 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User updateVendor(Long id, User userDetails) {
-        User user = getVendorById(id);
+        // Legacy support, verifying role
+        getVendorById(id);
+        return updateUser(id, userDetails);
+    }
 
-        user.setBusinessName(userDetails.getBusinessName());
-        user.setEmail(userDetails.getEmail());
-        user.setContactNumber(userDetails.getContactNumber());
-        // Password update logic if needed, skipping for now as not requested explicitly
+    @Override
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @Override
+    @Transactional
+    public User updateUser(Long id, User userDetails) {
+        User user = getUserById(id);
+
+        if (userDetails.getBusinessName() != null) user.setBusinessName(userDetails.getBusinessName());
+        if (userDetails.getEmail() != null) user.setEmail(userDetails.getEmail());
+        if (userDetails.getContactNumber() != null) user.setContactNumber(userDetails.getContactNumber());
+        if (userDetails.getAddress() != null) user.setAddress(userDetails.getAddress());
+        if (userDetails.getContactPerson() != null) user.setContactPerson(userDetails.getContactPerson());
 
         return userRepository.save(user);
     }
@@ -55,12 +71,45 @@ public class UserServiceImpl implements UserService {
     public void deleteVendor(Long id) {
         User user = getVendorById(id);
 
-        // Cancel active reservations
+        // Fetch all reservations for this user
         List<Reservation> reservations = reservationRepository.findByUserId(id);
-        for (Reservation reservation : reservations) {
-            reservationService.cancelReservation(reservation.getId());
+
+        // [STRICT GUARDRAIL] Block deletion if there are ANY confirmed or pending payments
+        boolean hasActiveFinancials = reservations.stream()
+                .anyMatch(res -> res.getPayment() != null && 
+                    (res.getPayment().getPaymentStatus() == com.bookfair.backend.enums.PaymentStatus.PENDING ||
+                     res.getPayment().getPaymentStatus() == com.bookfair.backend.enums.PaymentStatus.SUCCESS));
+
+        if (hasActiveFinancials) {
+            throw new RuntimeException(CommonMessages.VENDOR_HAS_PENDING_PAYMENTS);
         }
 
+        // [STRICT GUARDRAIL] Block deletion if there are ANY non-cancelled reservations
+        boolean hasActiveReservations = reservations.stream()
+                .anyMatch(res -> res.getReservationStatus() != com.bookfair.backend.enums.ReservationStatus.CANCELLED);
+        
+        if (hasActiveReservations) {
+            // Even if payments are not present, active stalls should be cancelled first
+            throw new RuntimeException("Can't delete vendor. Please cancel all active reservations first.");
+        }
+
+        // 1. Cleanup Genres
+        genreRepository.deleteByUserId(id);
+
+        // 2. Cleanup Reservations
+        // Since we checked for active ones above, these are likely all cancelled or empty
+        // We delete them to avoid foreign key violations when the user is deleted
+        for (Reservation reservation : reservations) {
+            reservationRepository.delete(reservation);
+        }
+
+        // 3. Delete the User
         userRepository.delete(user);
+    }
+
+    @Override
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
     }
 }

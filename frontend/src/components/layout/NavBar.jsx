@@ -24,18 +24,24 @@ const NavBar = ({ role, onLogout, userName, showBookingConfirmation }) => {
         if (role === 'admin') {
             return {
                 links: [
-                    { label: 'Admin Dashboard', to: '/admin' },
+                    { label: 'Dashboard', to: '/admin/dashboard' },
+                    { label: 'Vendors', to: '/admin/vendors' },
                     { label: 'Reservations', to: '/admin/reservations' },
+                    { label: 'Payments', to: '/admin/payments' },
+                    { label: 'Genres', to: '/admin/genres' },
                     { label: 'Reports', to: '/admin/reports' },
                 ],
                 primaryAction: { label: 'Logout', action: onLogout },
             };
         }
-        if (role === 'user') {
+        if (role === 'vendor' || role === 'user') { // Handling both 'vendor' (passed prop) and 'user' (legacy)
             const userLinks = [
-                { label: 'Dashboard', to: '/dashboard' },
-                { label: 'My Reservations', to: '/reservations' },
-                { label: 'Profile', to: '/profile' },
+                { label: 'Dashboard', to: '/user/dashboard' },
+                { label: 'Reserve Stalls', to: '/user/stalls' },
+                { label: 'My Reservations', to: '/user/vendor-reservations' },
+                { label: 'My Genres', to: '/user/genres' },
+                { label: 'Profile', to: '/user/profile' },
+                { label: 'Settings', to: '/user/settings' },
             ];
 
             return {

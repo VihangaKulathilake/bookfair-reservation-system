@@ -17,7 +17,7 @@ public class PayPalServiceImpl implements PayPalService {
     private final PayPalHttpClient payPalHttpClient;
 
     @Override
-    public PayPalOrderResponse createOrder(Double amount) {
+    public PayPalOrderResponse createOrder(Double amount, Long reservationId) {
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.checkoutPaymentIntent("CAPTURE");
 
@@ -25,9 +25,9 @@ public class PayPalServiceImpl implements PayPalService {
         purchaseUnits.add(new PurchaseUnitRequest().amountWithBreakdown(new AmountWithBreakdown().currencyCode("USD").value(String.format("%.2f", amount))));
         orderRequest.purchaseUnits(purchaseUnits);
         
-        // Redirect URLs
+        // Redirect URLs with Reservation ID
         ApplicationContext applicationContext = new ApplicationContext()
-                .returnUrl("http://localhost:5173/payment/success")
+                .returnUrl("http://localhost:5173/payment/success?reservationId=" + reservationId)
                 .cancelUrl("http://localhost:5173/payment/cancel");
         orderRequest.applicationContext(applicationContext);
 
@@ -55,14 +55,31 @@ public class PayPalServiceImpl implements PayPalService {
     @Override
     public boolean captureOrder(String orderId) {
         OrdersCaptureRequest request = new OrdersCaptureRequest(orderId);
-        request.requestBody(new OrderRequest());
+        // Do not send an empty body if not required by the SDK version, 
+        // but if it is, ensure it's valid. The SDK usually handles this.
 
         try {
             HttpResponse<Order> response = payPalHttpClient.execute(request);
             Order order = response.result();
             return "COMPLETED".equals(order.status());
         } catch (java.io.IOException e) {
-            throw new RuntimeException("Failed to capture PayPal order", e);
+            // Check if it's an HttpException from PayPal SDK
+            if (e.getMessage().contains("ORDER_ALREADY_CAPTURED") || e.getMessage().contains("status 422")) {
+                // If already captured, we try to fetch the order to verify status
+                return verifyOrderStatus(orderId);
+            }
+            throw new RuntimeException("Failed to capture PayPal order: " + e.getMessage(), e);
+        }
+    }
+
+    private boolean verifyOrderStatus(String orderId) {
+        try {
+            OrdersGetRequest request = new OrdersGetRequest(orderId);
+            HttpResponse<Order> response = payPalHttpClient.execute(request);
+            Order order = response.result();
+            return "COMPLETED".equals(order.status()) || "APPROVED".equals(order.status());
+        } catch (java.io.IOException e) {
+            return false;
         }
     }
 }

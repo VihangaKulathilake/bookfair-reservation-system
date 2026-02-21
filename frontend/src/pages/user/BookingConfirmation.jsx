@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
 	Alert,
 	Box,
@@ -13,224 +13,268 @@ import {
 	DialogTitle,
 	Divider,
 	Stack,
-	TextField,
 	Typography,
+	CircularProgress
 } from '@mui/material';
-import { CheckCircleOutline } from '@mui/icons-material';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
-import NavBar from '../../components/layout/NavBar';
+import { CheckCircleOutline, Payment as PaymentIcon, Money as CashIcon } from '@mui/icons-material';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { createReservation } from '../../api/reservationsApi';
+import { processPayment } from '../../api/paymentApi';
+import { getStoredAuth } from '../../api/dashboardApi';
+import ModernAlert from '../../components/common/ModernAlert';
 
-const BOOKING_HISTORY_STORAGE_KEY = 'bookfair_booking_history_v1';
-const COMPANY_CONFIRM_STORAGE_KEY = 'bookfair_company_confirmations_v1';
+const BookingConfirmation = ({ bookingDetails }) => {
+	const navigate = useNavigate();
+	const { stalls = [], company = {} } = bookingDetails;
 
-const BookingConfirmation = () => {
-	const { state } = useLocation();
-	const [companyForm, setCompanyForm] = useState({
-		companyName: '',
-		registrationNo: '',
-		email: '',
-		phone: '',
-	});
-	const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-	const [formError, setFormError] = useState('');
+	const [status, setStatus] = useState('review'); // review, creating, payment, processing, success, error
+	const [reservationId, setReservationId] = useState(null);
+	const [errorMessage, setErrorMessage] = useState('');
+	const [successMessage, setSuccessMessage] = useState('');
+	const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'error' });
 
-	const bookingHistory = useMemo(() => {
-		const fromState = state?.bookingId
-			? [{
-				bookingId: state.bookingId,
-				hallName: state.hallName || 'Hall -',
-				stalls: state.stalls || [],
-				confirmedAt: state.confirmedAt || new Date().toISOString(),
-			}]
-			: [];
+	// Group stalls by hall
+	const stallsByHall = stalls.reduce((acc, stall) => {
+		if (!acc[stall.hallName]) acc[stall.hallName] = [];
+		acc[stall.hallName].push(stall.id);
+		return acc;
+	}, {});
 
-		try {
-			const historyRaw = localStorage.getItem(BOOKING_HISTORY_STORAGE_KEY);
-			const parsed = historyRaw ? JSON.parse(historyRaw) : [];
-			if (!Array.isArray(parsed)) return fromState;
 
-			const byId = new Map();
-			[...fromState, ...parsed].forEach((item) => {
-				if (item?.bookingId) {
-					byId.set(item.bookingId, item);
-				}
+	const handleCreateReservation = async () => {
+		// Use consistent auth retrieval
+		const user = getStoredAuth();
+
+		if (!user || !user.userId) {
+			setAlert({
+				open: true,
+				title: 'Session Expired',
+				message: 'User session not found. Please log in again.',
+				severity: 'error'
 			});
-			return Array.from(byId.values());
-		} catch {
-			return fromState;
-		}
-	}, [state]);
-
-	const bookedHalls = useMemo(
-		() => Array.from(new Set(bookingHistory.map((item) => item.hallName).filter(Boolean))),
-		[bookingHistory]
-	);
-
-	const handleInputChange = (event) => {
-		const { name, value } = event.target;
-		setCompanyForm((previous) => ({
-			...previous,
-			[name]: value,
-		})); 
-		
-	};
-
-	const handleConfirmAndBook = () => {
-		if (!bookingHistory.length) {
-			setFormError('No booked halls/stalls found. Please book stalls first from Stall Reservation page.');
+			setTimeout(() => navigate('/login'), 2000);
 			return;
 		}
 
-		const allFilled = Object.values(companyForm).every((value) => value.trim().length > 0);
-		if (!allFilled) {
-			setFormError('Please fill all company details before confirmation.');
+		// Map userId to id for consistency if needed, though backend expects userId
+		const userId = user.userId;
+
+		// Filter valid stalls with dbId
+		const validStallIds = stalls.map(s => s.dbId).filter(id => id);
+
+		if (validStallIds.length === 0) {
+			setAlert({
+				open: true,
+				title: 'Selection Error',
+				message: 'No valid stalls selected for reservation (stalls found in map but not in database).',
+				severity: 'warning'
+			});
 			return;
 		}
 
-		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyForm.email)) {
-			setFormError('Please enter a valid company email address.');
-			return;
-		}
-
-		const confirmationRecord = {
-			confirmationId: `CONF-${Date.now().toString().slice(-6)}`,
-			...companyForm,
-			bookings: bookingHistory,
-			createdAt: new Date().toISOString(),
+		const bookingRecord = {
+			userId: userId,
+			stallIds: validStallIds
 		};
 
 		try {
-			const existingRaw = localStorage.getItem(COMPANY_CONFIRM_STORAGE_KEY);
-			const existing = existingRaw ? JSON.parse(existingRaw) : [];
-			const next = [confirmationRecord, ...(Array.isArray(existing) ? existing : [])];
-			localStorage.setItem(COMPANY_CONFIRM_STORAGE_KEY, JSON.stringify(next));
-		} catch (error) {
-			console.error('Failed to persist company confirmation', error);
-		}
+			setStatus('creating');
+			const response = await createReservation(bookingRecord);
 
-		setFormError('');
-		setShowSuccessDialog(true);
+			if (response.success && response.data) {
+				setReservationId(response.data.reservationId);
+				setStatus('payment'); // Move to payment step
+			} else {
+				setErrorMessage('Failed to create reservation. Please try again.');
+				setStatus('error');
+			}
+		} catch (error) {
+			console.error('Failed to create reservation', error);
+			const msg = error.response?.data?.message || error.message || 'Failed to create reservation.';
+			setErrorMessage(msg);
+			setStatus('error');
+		}
+	};
+
+	const handlePayment = async (method) => {
+		if (!reservationId) return;
+		setStatus('processing');
+
+		try {
+			const paymentData = {
+				reservationId: reservationId,
+				paymentMethod: method
+			};
+
+			const response = await processPayment(paymentData);
+
+			if (method === 'PAYPAL') {
+				// response is PayPalOrderResponse
+				if (response.approvalLink) {
+					window.location.href = response.approvalLink;
+				} else {
+					throw new Error('No approval link received from PayPal.');
+				}
+			} else {
+				// CASH -> Valid JSON response (PaymentResponse)
+				setSuccessMessage('Reservation confirmed! Please pay at the counter.');
+				setStatus('success');
+			}
+
+		} catch (error) {
+			console.error(`Failed to process ${method} payment`, error);
+			setErrorMessage(error.message || 'Payment processing failed.');
+			setStatus('payment'); // Go back to payment selection on error
+			setAlert({
+				open: true,
+				title: 'Payment Failed',
+				message: error.message || 'Payment processing failed. Please try again.',
+				severity: 'error'
+			});
+		}
 	};
 
 	return (
-		<Box sx={{ minHeight: '100vh', background: '#f4f7fc' }}>
-			<NavBar role="user" />
-			<Box sx={{ maxWidth: 920, mx: 'auto', px: 2, py: 4 }}>
+		<Box sx={{ minHeight: '60vh' }}>
+			<Box sx={{ maxWidth: 800, mx: 'auto', px: 2, py: 4 }}>
 				<Card sx={{ borderRadius: 3, border: '1px solid rgba(13,71,161,0.15)', boxShadow: '0 18px 36px rgba(13,71,161,0.12)' }}>
 					<CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
-						<Stack spacing={2}>
+
+						{/* HEADER */}
+						<Stack spacing={3}>
 							<Stack direction="row" alignItems="center" spacing={1.2}>
 								<CheckCircleOutline color="success" />
 								<Typography variant="h5" fontWeight={800} color="primary.main">
-									Booking Confirmation
+									{status === 'payment' ? 'Select Payment Method' : 'Review & Confirm Booking'}
 								</Typography>
 							</Stack>
 
 							<Typography color="text.secondary" sx={{ fontWeight: 600 }}>
-								Fill company details, verify booked halls/stalls, then click <strong>Confirm and Book</strong>.
+								{status === 'payment'
+									? 'Your reservation is created. Please select a payment method to finalize.'
+									: 'Please review your stall selection and company details below.'}
 							</Typography>
 
 							<Divider />
 
-							{formError && <Alert severity="error">{formError}</Alert>}
-
-							<Stack spacing={1.2}>
+							{/* DETAILS SECTION (Always visible for context) */}
+							<Stack spacing={2}>
 								<Typography variant="h6" fontWeight={700} color="primary.main">Company Details</Typography>
-								<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2}>
-									<TextField
-										label="Company Name"
-										name="companyName"
-										fullWidth
-										value={companyForm.companyName}
-										onChange={handleInputChange}
-									/>
-									<TextField
-										label="Business Registration No"
-										name="registrationNo"
-										fullWidth
-										value={companyForm.registrationNo}
-										onChange={handleInputChange}
-									/>
-								</Stack>
-								<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2}>
-									<TextField
-										label="Company Email"
-										name="email"
-										type="email"
-										fullWidth
-										value={companyForm.email}
-										onChange={handleInputChange}
-									/>
-									<TextField
-										label="Phone Number"
-										name="phone"
-										fullWidth
-										value={companyForm.phone}
-										onChange={handleInputChange}
-									/>
-								</Stack>
+								<Box sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 1, alignItems: 'center' }}>
+									<Typography fontWeight={600}>Name:</Typography> <Typography>{company.companyName || company.businessName}</Typography>
+									<Typography fontWeight={600}>Email:</Typography> <Typography>{company.email}</Typography>
+									<Typography fontWeight={600}>Phone:</Typography> <Typography>{company.phone || company.contactNumber}</Typography>
+								</Box>
 							</Stack>
 
 							<Divider />
 
-							<Typography variant="h6" fontWeight={700} color="primary.main">Booked Halls</Typography>
-							<Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-								{bookedHalls.length ? (
-									bookedHalls.map((hallName) => (
-										<Chip key={hallName} label={hallName} color="primary" variant="outlined" />
-									))
-								) : (
-									<Chip label="No booked halls yet" variant="outlined" />
-								)}
-							</Stack>
-
-							<Stack spacing={1.1}>
-								{bookingHistory.length ? bookingHistory.map((item) => (
-									<Box
-										key={item.bookingId}
-										sx={{ border: '1px solid rgba(13,71,161,0.14)', borderRadius: 2, px: 1.5, py: 1 }}
-									>
-										<Typography><strong>Booking ID:</strong> {item.bookingId}</Typography>
-										<Typography><strong>Hall:</strong> {item.hallName}</Typography>
-										<Typography><strong>Stalls:</strong> {(item.stalls || []).join(', ') || 'None'}</Typography>
-										<Typography><strong>Booked At:</strong> {new Date(item.confirmedAt).toLocaleString()}</Typography>
+							<Typography variant="h6" fontWeight={700} color="primary.main">Stall Selection</Typography>
+							<Stack spacing={2}>
+								{Object.entries(stallsByHall).map(([hallName, stallIds]) => (
+									<Box key={hallName} sx={{ border: '1px solid rgba(0,0,0,0.1)', p: 2, borderRadius: 2 }}>
+										<Typography variant="subtitle1" fontWeight={700}>{hallName}</Typography>
+										<Stack direction="row" gap={1} flexWrap="wrap" mt={1}>
+											{stallIds.map(id => (
+												<Chip key={id} label={id.split('-').pop()} size="small" color="primary" />
+											))}
+										</Stack>
 									</Box>
-								)) : (
-									<Typography color="text.secondary">No booking records found yet.</Typography>
+								))}
+							</Stack>
+
+							{/* ACTIONS */}
+							<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2} pt={2}>
+								{status === 'review' && (
+									<Button
+										variant="contained"
+										color="primary"
+										onClick={handleCreateReservation}
+										fullWidth
+										size="large"
+										sx={{ textTransform: 'none', fontWeight: 700 }}
+									>
+										Confirm Reservation
+									</Button>
+								)}
+
+								{status === 'creating' && (
+									<Button disabled fullWidth variant="contained" startIcon={<CircularProgress size={20} />}>
+										Creating Reservation...
+									</Button>
+								)}
+
+								{status === 'payment' && (
+									<>
+										<Button
+											variant="contained"
+											color="success"
+											onClick={() => handlePayment('CASH')}
+											fullWidth
+											size="large"
+											startIcon={<CashIcon />}
+											sx={{ textTransform: 'none', fontWeight: 700 }}
+										>
+											Pay with Cash
+										</Button>
+										<Button
+											variant="contained"
+											onClick={() => handlePayment('PAYPAL')}
+											fullWidth
+											size="large"
+											startIcon={<PaymentIcon />}
+											sx={{
+												textTransform: 'none',
+												fontWeight: 700,
+												bgcolor: '#003087', // PayPal Blue
+												'&:hover': { bgcolor: '#00256b' }
+											}}
+										>
+											Pay with PayPal
+										</Button>
+									</>
+								)}
+
+								{status === 'processing' && (
+									<Button disabled fullWidth variant="contained" startIcon={<CircularProgress size={20} />}>
+										Processing Payment...
+									</Button>
 								)}
 							</Stack>
 
-							<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2}>
-								<Button
-									variant="contained"
-									color="secondary"
-									onClick={handleConfirmAndBook}
-									sx={{ textTransform: 'none', fontWeight: 700 }}
-								>
-									Confirm and Book
-								</Button>
-								<Button component={RouterLink} to="/stall-reservation" variant="contained" color="primary" sx={{ textTransform: 'none', fontWeight: 700 }}>
-									Back to Stall Reservation
-								</Button>
-							</Stack>
+							{status === 'error' && (
+								<Alert severity="error">{errorMessage}</Alert>
+							)}
 						</Stack>
 					</CardContent>
 				</Card>
 			</Box>
 
-			<Dialog open={showSuccessDialog} onClose={() => setShowSuccessDialog(false)}>
-				<DialogTitle>Booking Successful</DialogTitle>
+			{/* Success Dialog (For Cash) */}
+			<Dialog open={status === 'success'} onClose={() => { }}>
+				<DialogTitle>Booking Confirmed</DialogTitle>
 				<DialogContent>
 					<DialogContentText>
-						Your booking has been confirmed successfully. We have saved your company details and booked hall information.
+						{successMessage}
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setShowSuccessDialog(false)} autoFocus>
-						OK
+					<Button component={RouterLink} to="/user/dashboard" autoFocus>
+						Go to Dashboard
+					</Button>
+					<Button component={RouterLink} to="/user/reservations" >
+						My Reservations
 					</Button>
 				</DialogActions>
 			</Dialog>
+
+			<ModernAlert
+				open={alert.open}
+				title={alert.title}
+				message={alert.message}
+				severity={alert.severity}
+				onClose={() => setAlert({ ...alert, open: false })}
+			/>
 		</Box>
 	);
 };

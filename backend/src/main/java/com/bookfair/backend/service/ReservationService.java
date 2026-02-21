@@ -18,6 +18,8 @@ public interface ReservationService {
 
     ReservationResponse updateReservationStatus(Long id, String status);
 
+    ReservationResponse updateReservation(Long id, ReservationRequest reservationRequest);
+
     void deleteReservation(Long id);
 
     byte[] generateQrCode(Long reservationId);
