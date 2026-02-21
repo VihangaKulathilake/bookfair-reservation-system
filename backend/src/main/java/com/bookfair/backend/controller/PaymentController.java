@@ -50,12 +50,15 @@ public class PaymentController {
         return paymentService.getPaymentsByUserId(userId);
     }
 
-    @PutMapping("/{id}")
+ 
+    @PutMapping(ApiEndpoints.UPDATE_PAYMENT)
+
     public PaymentResponse updatePayment(@PathVariable Long id, @RequestBody PaymentRequest paymentRequest) {
         return paymentService.updatePayment(id, paymentRequest);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(ApiEndpoints.DELETE_PAYMENT)
+
     public void deletePayment(@PathVariable Long id) {
         paymentService.deletePayment(id);
     }
