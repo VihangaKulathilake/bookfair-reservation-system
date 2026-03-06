@@ -8,20 +8,25 @@ import {
     InputAdornment,
     CircularProgress,
     useTheme,
-    alpha
+    alpha,
+    Stack
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { Email, ArrowBack, CheckCircleOutline } from '@mui/icons-material';
+import { Email, ArrowBack, CheckCircleOutline, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
+import { IconButton } from '@mui/material';
 
 const ForgotPasswordForm = ({
+    step,
     email,
+    passwords,
     handleChange,
     handleSubmit,
     error,
-    loading,
-    submitted
+    loading
 }) => {
     const theme = useTheme();
+    const [showPassword, setShowPassword] = React.useState(false);
+
     const inputSx = {
         '& .MuiOutlinedInput-root': {
             borderRadius: '14px',
@@ -44,7 +49,7 @@ const ForgotPasswordForm = ({
         },
     };
 
-    if (submitted) {
+    if (step === 3) {
         return (
             <Box sx={{ textAlign: 'center', py: 4, width: '100%' }}>
                 <Box
@@ -59,31 +64,26 @@ const ForgotPasswordForm = ({
                     <CheckCircleOutline sx={{ mb: 2, fontSize: 56, color: theme.palette.success.main }} />
                 </Box>
                 <Typography variant="h5" fontWeight="bold" color="text.primary" gutterBottom>
-                    Check Your Email
+                    Password Reset!
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                    We've sent a password reset link to <strong>{email}</strong>
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Please check your inbox and click the link to reset your password.
+                    Your password has been successfully updated.
                 </Typography>
                 <Button
                     component={RouterLink}
                     to="/login"
-                    variant="outlined"
+                    variant="contained"
+                    size="large"
                     sx={{
                         borderRadius: '14px',
                         textTransform: 'none',
                         fontWeight: 'bold',
-                        borderWidth: '2px',
-                        '&:hover': {
-                            borderWidth: '2px',
-                            backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                        }
+                        px: 4,
+                        py: 1.5,
+                        boxShadow: `0 10px 20px ${alpha(theme.palette.primary.main, 0.2)}`
                     }}
                 >
-                    <ArrowBack sx={{ mr: 1, fontSize: 18 }} />
-                    Back to Login
+                    Sign In Now
                 </Button>
             </Box>
         );
@@ -93,35 +93,89 @@ const ForgotPasswordForm = ({
         <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
             <Box sx={{ mb: 4, textAlign: 'center' }}>
                 <Typography component="h1" variant="h4" fontWeight={700} color="text.primary">
-                    Forgot Password
+                    {step === 1 ? "Forgot Password" : "Reset Password"}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    Enter your email to receive a reset link
+                    {step === 1 ? "Enter your email to verify your account" : `Resetting password for ${email}`}
                 </Typography>
             </Box>
 
-            <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="email"
-                label="Email Address"
-                name="email"
-                autoComplete="email"
-                autoFocus
-                value={email}
-                onChange={handleChange}
-                error={!!error}
-                helperText={error}
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <Email color="action" />
-                        </InputAdornment>
-                    ),
-                }}
-                sx={inputSx}
-            />
+            {step === 1 ? (
+                <TextField
+                    margin="normal"
+                    required
+                    fullWidth
+                    id="email"
+                    label="Email Address"
+                    name="email"
+                    autoComplete="email"
+                    autoFocus
+                    value={email}
+                    onChange={handleChange}
+                    error={!!error}
+                    helperText={error}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <Email color="action" />
+                            </InputAdornment>
+                        ),
+                    }}
+                    sx={inputSx}
+                />
+            ) : (
+                <Stack spacing={1}>
+                    <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        name="password"
+                        label="New Password"
+                        type={showPassword ? 'text' : 'password'}
+                        id="password"
+                        autoFocus
+                        value={passwords.password}
+                        onChange={handleChange}
+                        error={!!error && error.includes('match') === false}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <Lock color="action" />
+                                </InputAdornment>
+                            ),
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton onClick={() => setShowPassword(!showPassword)}>
+                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            )
+                        }}
+                        sx={inputSx}
+                    />
+                    <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        name="confirmPassword"
+                        label="Confirm Password"
+                        type={showPassword ? 'text' : 'password'}
+                        id="confirmPassword"
+                        value={passwords.confirmPassword}
+                        onChange={handleChange}
+                        error={!!error && error.includes('match')}
+                        helperText={error}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <Lock color="action" />
+                                </InputAdornment>
+                            ),
+                        }}
+                        sx={inputSx}
+                    />
+                </Stack>
+            )}
 
             <Box sx={{ transition: 'transform 0.2s ease', '&:hover': { transform: 'translateY(-1px)' } }}>
                 <Button
@@ -144,7 +198,7 @@ const ForgotPasswordForm = ({
                         },
                     }}
                 >
-                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Send Reset Link'}
+                    {loading ? <CircularProgress size={24} color="inherit" /> : (step === 1 ? 'Verify Email' : 'Update Password')}
                 </Button>
             </Box>
 

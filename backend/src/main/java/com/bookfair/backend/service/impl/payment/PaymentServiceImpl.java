@@ -127,11 +127,14 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public List<PaymentResponse> getPaymentsByUserId(Long userId) {
+        System.out.println("DEBUG: Fetching payments for userId: " + userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException(CommonMessages.USER_NOT_FOUND));
 
-        return paymentRepository.findByReservationUserId(user.getId())
-                .stream()
+        List<Payment> payments = paymentRepository.findByReservationUserId(user.getId());
+        System.out.println("DEBUG: Found " + payments.size() + " payments for user " + user.getId());
+        
+        return payments.stream()
                 .map(this::mapToPaymentResponse)
                 .toList();
     }

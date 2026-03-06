@@ -10,6 +10,7 @@ import SiteFooter from '../../components/layout/SiteFooter';
 import { logoutUser } from '../../api/authApi';
 import { getGenresByVendor, createGenre, updateGenre, deleteGenre, getStoredAuth } from '../../api/dashboardApi';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon, LibraryBooks } from '@mui/icons-material';
+import ModernAlert from '../../components/common/ModernAlert';
 
 const VendorGenres = () => {
     const theme = useTheme();
@@ -18,6 +19,8 @@ const VendorGenres = () => {
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({ id: null, name: '' });
     const [user] = useState(getStoredAuth());
+    const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'error' });
+    const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
 
     const handleLogout = () => {
         logoutUser();
@@ -56,19 +59,39 @@ const VendorGenres = () => {
             setFormData({ id: null, name: '' });
             fetchGenres();
         } catch (error) {
-            alert("Failed to save genre");
+            setAlert({
+                open: true,
+                title: 'Save Failed',
+                message: 'Failed to save genre. Please try again.',
+                severity: 'error'
+            });
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Delete this genre?")) {
-            try {
-                await deleteGenre(id);
-                fetchGenres();
-            } catch (error) {
-                alert("Failed to delete genre");
-            }
+    const handleDeleteClick = (id) => {
+        setConfirmDelete({ open: true, id });
+    };
+
+    const handleDeleteConfirm = async () => {
+        const id = confirmDelete.id;
+        try {
+            await deleteGenre(id);
+            setAlert({
+                open: true,
+                title: 'Deleted',
+                message: 'Genre deleted successfully.',
+                severity: 'success'
+            });
+            fetchGenres();
+        } catch (error) {
+            setAlert({
+                open: true,
+                title: 'Delete Failed',
+                message: 'Failed to delete genre.',
+                severity: 'error'
+            });
         }
+        setConfirmDelete({ open: false, id: null });
     };
 
     const handleEdit = (genre) => {
@@ -110,7 +133,6 @@ const VendorGenres = () => {
                         <Table sx={{ minWidth: 650 }} aria-label="genres table">
                             <TableHead sx={{ bgcolor: '#f8f9fa' }}>
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '0.75rem', py: 2 }}>ID</TableCell>
                                     <TableCell sx={{ fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '0.75rem', py: 2 }}>Genre Name</TableCell>
                                     <TableCell align="right" sx={{ fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '0.75rem', py: 2 }}>Actions</TableCell>
                                 </TableRow>
@@ -131,9 +153,6 @@ const VendorGenres = () => {
                                             key={genre.id}
                                             sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { bgcolor: 'action.hover' }, transition: 'background-color 0.2s' }}
                                         >
-                                            <TableCell sx={{ fontWeight: 700, color: 'primary.main', fontSize: '0.9rem', width: 100 }}>
-                                                #{genre.id}
-                                            </TableCell>
                                             <TableCell>
                                                 <Typography variant="body2" fontWeight={600} color="text.primary">
                                                     {genre.name}
@@ -153,7 +172,7 @@ const VendorGenres = () => {
                                                     <Tooltip title="Delete Genre">
                                                         <IconButton
                                                             size="small"
-                                                            onClick={() => handleDelete(genre.id)}
+                                                            onClick={() => handleDeleteClick(genre.id)}
                                                             sx={{ color: 'error.main', bgcolor: 'error.light', '&:hover': { bgcolor: 'error.main', color: 'white' }, opacity: 0.8 }}
                                                         >
                                                             <DeleteIcon fontSize="small" />
@@ -200,6 +219,31 @@ const VendorGenres = () => {
                                 sx={{ fontWeight: 700, borderRadius: 2, textTransform: 'none', px: 3 }}
                             >
                                 {formData.id ? 'Update' : 'Add Genre'}
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+
+                    <ModernAlert
+                        open={alert.open}
+                        title={alert.title}
+                        message={alert.message}
+                        severity={alert.severity}
+                        onClose={() => setAlert({ ...alert, open: false })}
+                    />
+
+                    <Dialog
+                        open={confirmDelete.open}
+                        onClose={() => setConfirmDelete({ open: false, id: null })}
+                        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+                    >
+                        <DialogTitle sx={{ fontWeight: 700 }}>Delete Genre?</DialogTitle>
+                        <DialogContent>
+                            <Typography>Are you sure you want to delete this genre? This action cannot be undone.</Typography>
+                        </DialogContent>
+                        <DialogActions sx={{ px: 3, pb: 2 }}>
+                            <Button onClick={() => setConfirmDelete({ open: false, id: null })} color="inherit" sx={{ fontWeight: 600 }}>Cancel</Button>
+                            <Button onClick={handleDeleteConfirm} variant="contained" color="error" disableElevation sx={{ fontWeight: 600, borderRadius: 2 }}>
+                                Delete
                             </Button>
                         </DialogActions>
                     </Dialog>

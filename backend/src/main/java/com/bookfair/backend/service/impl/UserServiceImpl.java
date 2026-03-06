@@ -22,6 +22,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ReservationService reservationService; // To cancel reservations
     private final ReservationRepository reservationRepository; // To find reservations
+    private final com.bookfair.backend.repository.GenreRepository genreRepository;
 
     @Override
     public List<User> getAllVendors() {
@@ -70,20 +71,39 @@ public class UserServiceImpl implements UserService {
     public void deleteVendor(Long id) {
         User user = getVendorById(id);
 
-        // [GUARDRAIL] Payment Shield: Check for pending payments
-        boolean hasPendingPayments = reservationRepository.findByUserId(id).stream()
-                .anyMatch(res -> res.getPayment() != null && res.getPayment().getPaymentStatus() == com.bookfair.backend.enums.PaymentStatus.PENDING);
+        // Fetch all reservations for this user
+        List<Reservation> reservations = reservationRepository.findByUserId(id);
 
-        if (hasPendingPayments) {
+        // [STRICT GUARDRAIL] Block deletion if there are ANY confirmed or pending payments
+        boolean hasActiveFinancials = reservations.stream()
+                .anyMatch(res -> res.getPayment() != null && 
+                    (res.getPayment().getPaymentStatus() == com.bookfair.backend.enums.PaymentStatus.PENDING ||
+                     res.getPayment().getPaymentStatus() == com.bookfair.backend.enums.PaymentStatus.SUCCESS));
+
+        if (hasActiveFinancials) {
             throw new RuntimeException(CommonMessages.VENDOR_HAS_PENDING_PAYMENTS);
         }
 
-        // Cancel active reservations
-        List<Reservation> reservations = reservationRepository.findByUserId(id);
-        for (Reservation reservation : reservations) {
-            reservationService.cancelReservation(reservation.getId());
+        // [STRICT GUARDRAIL] Block deletion if there are ANY non-cancelled reservations
+        boolean hasActiveReservations = reservations.stream()
+                .anyMatch(res -> res.getReservationStatus() != com.bookfair.backend.enums.ReservationStatus.CANCELLED);
+        
+        if (hasActiveReservations) {
+            // Even if payments are not present, active stalls should be cancelled first
+            throw new RuntimeException("Can't delete vendor. Please cancel all active reservations first.");
         }
 
+        // 1. Cleanup Genres
+        genreRepository.deleteByUserId(id);
+
+        // 2. Cleanup Reservations
+        // Since we checked for active ones above, these are likely all cancelled or empty
+        // We delete them to avoid foreign key violations when the user is deleted
+        for (Reservation reservation : reservations) {
+            reservationRepository.delete(reservation);
+        }
+
+        // 3. Delete the User
         userRepository.delete(user);
     }
 

@@ -20,6 +20,8 @@ const AdminStalls = () => {
     const [loading, setLoading] = useState(true);
     const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'warning' });
     const [editOpen, setEditOpen] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [stallToDelete, setStallToDelete] = useState(null);
     const [selectedStall, setSelectedStall] = useState(null);
     const user = getStoredAuth();
 
@@ -39,20 +41,32 @@ const AdminStalls = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this stall?")) {
-            try {
-                await deleteStall(id);
-                fetchStalls();
-                setAlert({ open: false });
-            } catch (error) {
-                setAlert({
-                    open: true,
-                    title: "Can't Delete Stall",
-                    message: error.response?.data?.message || "Can't delete active reservations.",
-                    severity: 'warning'
-                });
-            }
+    const handleDeleteClick = (id) => {
+        setStallToDelete(id);
+        setDeleteConfirmOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        const id = stallToDelete;
+        try {
+            await deleteStall(id);
+            fetchStalls();
+            setAlert({
+                open: true,
+                title: 'Stall Deleted',
+                message: 'The stall has been successfully removed.',
+                severity: 'success'
+            });
+        } catch (error) {
+            setAlert({
+                open: true,
+                title: "Can't Delete Stall",
+                message: error.response?.data?.message || "Can't delete active reservations.",
+                severity: 'warning'
+            });
+        } finally {
+            setDeleteConfirmOpen(false);
+            setStallToDelete(null);
         }
     };
 
@@ -197,7 +211,7 @@ const AdminStalls = () => {
                                                     <Tooltip title="Delete Stall">
                                                         <IconButton
                                                             size="small"
-                                                            onClick={() => handleDelete(row.stallId)}
+                                                            onClick={() => handleDeleteClick(row.stallId)}
                                                             color="error"
                                                             sx={{ bgcolor: alpha(theme.palette.error.main, 0.05), '&:hover': { bgcolor: theme.palette.error.main, color: 'white' } }}
                                                         >
@@ -279,6 +293,26 @@ const AdminStalls = () => {
                         sx={{ borderRadius: 2, fontWeight: 700, px: 3 }}
                     >
                         Update Stall
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+            >
+                <DialogTitle sx={{ fontWeight: 800 }}>Confirm Stall Deletion</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body1">
+                        Are you sure you want to delete this stall? This action cannot be undone if there are no active dependencies.
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setDeleteConfirmOpen(false)} sx={{ fontWeight: 700, color: 'text.secondary' }}>Cancel</Button>
+                    <Button onClick={handleDeleteConfirm} variant="contained" color="error" sx={{ fontWeight: 700, borderRadius: 2, px: 3 }}>
+                        Delete Stall
                     </Button>
                 </DialogActions>
             </Dialog>

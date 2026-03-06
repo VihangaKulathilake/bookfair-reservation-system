@@ -32,6 +32,8 @@ public class AuthServiceImpl implements AuthService {
                 throw new RuntimeException(CommonMessages.EMAIL_ALREADY_EXISTS);
             }
 
+            validatePasswordComplexity(registerRequest.getPassword());
+
             User user = new User();
             user.setBusinessName(registerRequest.getBusinessName());
             user.setEmail(registerRequest.getEmail());
@@ -46,8 +48,7 @@ public class AuthServiceImpl implements AuthService {
             String token = jwtService.generateToken(user.getEmail());
             return new AuthResponse(user.getId(), user.getBusinessName(), user.getContactPerson(), token);
         } catch (Exception e) {
-            e.printStackTrace();  // Check the console for the real error
-            throw new RuntimeException("Registration failed");
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -63,5 +64,44 @@ public class AuthServiceImpl implements AuthService {
 
         String token = jwtService.generateToken(user.getEmail());
         return new AuthResponse(user.getId(), user.getBusinessName(), user.getContactPerson(), token);
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void resetPassword(com.bookfair.backend.dto.PasswordResetRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException(CommonMessages.USER_NOT_FOUND));
+        
+        validatePasswordComplexity(request.getNewPassword());
+        
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    private void validatePasswordComplexity(String password) {
+        if (password == null || password.length() < 8) {
+            throw new RuntimeException("Password must be at least 8 characters long");
+        }
+        
+        boolean hasUpper = false;
+        boolean hasLower = false;
+        boolean hasDigit = false;
+        boolean hasSpecial = false;
+        
+        for (char c : password.toCharArray()) {
+            if (Character.isUpperCase(c)) hasUpper = true;
+            else if (Character.isLowerCase(c)) hasLower = true;
+            else if (Character.isDigit(c)) hasDigit = true;
+            else if (!Character.isLetterOrDigit(c)) hasSpecial = true;
+        }
+        
+        if (!hasUpper || !hasLower || !hasDigit || !hasSpecial) {
+            throw new RuntimeException("Password must include uppercase, lowercase, number, and symbol");
+        }
     }
 }

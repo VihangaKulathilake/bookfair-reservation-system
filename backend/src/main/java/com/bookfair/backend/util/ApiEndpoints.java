@@ -41,7 +41,7 @@ public final class ApiEndpoints {
     public static final String CONFIRM_CASH_PAYMENT = "/{paymentId}/confirm";
     public static final String GET_PAYMENT_BY_ID = "/{paymentId}";
     public static final String GET_ALL_PAYMENTS = "/all";
-    public static final String GET_PAYMENTS_BY_USER_ID = "/{userId}";
+    public static final String GET_PAYMENTS_BY_USER_ID = "/user/{userId}";
 
     
     // ===================== GENRES =====================

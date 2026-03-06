@@ -22,7 +22,7 @@ public class ReservationController {
     }
 
     @PutMapping(ApiEndpoints.CANCEL_RESERVATION)
-    public ReservationResponse cancelReservation(@PathVariable Long reservationId) {
+    public ReservationResponse cancelReservation(@PathVariable("id") Long reservationId) {
         return reservationService.cancelReservation(reservationId);
     }
 
@@ -32,7 +32,7 @@ public class ReservationController {
     }
 
     @GetMapping(ApiEndpoints.GET_RESERVATION_BY_ID)
-    public ReservationResponse getReservationById(@PathVariable Long reservationId) {
+    public ReservationResponse getReservationById(@PathVariable("id") Long reservationId) {
         return reservationService.getReservationById(reservationId);
     }
 

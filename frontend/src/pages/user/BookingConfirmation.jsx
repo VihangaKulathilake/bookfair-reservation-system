@@ -21,6 +21,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { createReservation } from '../../api/reservationsApi';
 import { processPayment } from '../../api/paymentApi';
 import { getStoredAuth } from '../../api/dashboardApi';
+import ModernAlert from '../../components/common/ModernAlert';
 
 const BookingConfirmation = ({ bookingDetails }) => {
 	const navigate = useNavigate();
@@ -30,6 +31,7 @@ const BookingConfirmation = ({ bookingDetails }) => {
 	const [reservationId, setReservationId] = useState(null);
 	const [errorMessage, setErrorMessage] = useState('');
 	const [successMessage, setSuccessMessage] = useState('');
+	const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'error' });
 
 	// Group stalls by hall
 	const stallsByHall = stalls.reduce((acc, stall) => {
@@ -44,8 +46,13 @@ const BookingConfirmation = ({ bookingDetails }) => {
 		const user = getStoredAuth();
 
 		if (!user || !user.userId) {
-			alert('User session not found. Please log in again.');
-			navigate('/login');
+			setAlert({
+				open: true,
+				title: 'Session Expired',
+				message: 'User session not found. Please log in again.',
+				severity: 'error'
+			});
+			setTimeout(() => navigate('/login'), 2000);
 			return;
 		}
 
@@ -56,7 +63,12 @@ const BookingConfirmation = ({ bookingDetails }) => {
 		const validStallIds = stalls.map(s => s.dbId).filter(id => id);
 
 		if (validStallIds.length === 0) {
-			alert('No valid stalls selected for reservation (stalls found in map but not in database).');
+			setAlert({
+				open: true,
+				title: 'Selection Error',
+				message: 'No valid stalls selected for reservation (stalls found in map but not in database).',
+				severity: 'warning'
+			});
 			return;
 		}
 
@@ -113,7 +125,12 @@ const BookingConfirmation = ({ bookingDetails }) => {
 			console.error(`Failed to process ${method} payment`, error);
 			setErrorMessage(error.message || 'Payment processing failed.');
 			setStatus('payment'); // Go back to payment selection on error
-			alert('Payment failed: ' + error.message);
+			setAlert({
+				open: true,
+				title: 'Payment Failed',
+				message: error.message || 'Payment processing failed. Please try again.',
+				severity: 'error'
+			});
 		}
 	};
 
@@ -250,6 +267,14 @@ const BookingConfirmation = ({ bookingDetails }) => {
 					</Button>
 				</DialogActions>
 			</Dialog>
+
+			<ModernAlert
+				open={alert.open}
+				title={alert.title}
+				message={alert.message}
+				severity={alert.severity}
+				onClose={() => setAlert({ ...alert, open: false })}
+			/>
 		</Box>
 	);
 };

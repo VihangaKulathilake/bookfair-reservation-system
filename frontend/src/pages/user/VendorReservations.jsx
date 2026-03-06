@@ -8,12 +8,16 @@ import UserNavbar from '../../components/layout/UserNavbar';
 import SiteFooter from '../../components/layout/SiteFooter';
 import { logoutUser } from '../../api/authApi';
 import { getReservationsByUserId, cancelReservation, getStoredAuth } from '../../api/dashboardApi';
+import ModernAlert from '../../components/common/ModernAlert';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Divider } from '@mui/material';
 
 const VendorReservations = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const [reservations, setReservations] = useState([]);
     const [user] = useState(getStoredAuth());
+    const [alert, setAlert] = useState({ open: false, title: '', message: '', severity: 'warning' });
+    const [cancelConfirm, setCancelConfirm] = useState({ open: false, id: null });
 
     const handleLogout = () => {
         logoutUser();
@@ -35,14 +39,30 @@ const VendorReservations = () => {
         }
     };
 
-    const handleCancel = async (id) => {
-        if (window.confirm("Are you sure you want to cancel this reservation?")) {
-            try {
-                await cancelReservation(id);
-                fetchReservations();
-            } catch (error) {
-                alert("Failed to cancel reservation");
-            }
+    const handleCancel = (id) => {
+        setCancelConfirm({ open: true, id });
+    };
+
+    const handleConfirmCancel = async () => {
+        const id = cancelConfirm.id;
+        try {
+            await cancelReservation(id);
+            fetchReservations();
+            setAlert({
+                open: true,
+                title: 'Success',
+                message: 'Reservation cancelled successfully.',
+                severity: 'success'
+            });
+        } catch (error) {
+            setAlert({
+                open: true,
+                title: 'Cancellation Failed',
+                message: error.response?.data?.message || 'Failed to cancel reservation.',
+                severity: 'error'
+            });
+        } finally {
+            setCancelConfirm({ open: false, id: null });
         }
     };
 
@@ -87,6 +107,34 @@ const VendorReservations = () => {
                     </TableContainer>
                 </Container>
             </Box>
+
+            <ModernAlert
+                open={alert.open}
+                title={alert.title}
+                message={alert.message}
+                severity={alert.severity}
+                onClose={() => setAlert({ ...alert, open: false })}
+            />
+
+            <Dialog
+                open={cancelConfirm.open}
+                onClose={() => setCancelConfirm({ open: false, id: null })}
+                PaperProps={{ sx: { borderRadius: '20px', p: 1 } }}
+            >
+                <DialogTitle sx={{ fontWeight: 800 }}>Confirm Cancellation</DialogTitle>
+                <Divider sx={{ mx: 3 }} />
+                <DialogContent>
+                    <Typography variant="body1">
+                        Are you sure you want to cancel this reservation? This action cannot be undone.
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setCancelConfirm({ open: false, id: null })} sx={{ fontWeight: 700, color: 'text.secondary' }}>No, Keep it</Button>
+                    <Button onClick={handleConfirmCancel} variant="contained" color="error" sx={{ fontWeight: 700, borderRadius: '12px', px: 3 }}>
+                        Yes, Cancel
+                    </Button>
+                </DialogActions>
+            </Dialog>
             <SiteFooter />
         </Box>
     );
